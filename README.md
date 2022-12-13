@@ -1,6 +1,11 @@
 SAAM Description
 ================
 
+## Shiny app
+
+The app itself can be found here:
+
+[https://mollyc.shinyapps.io/saam/]
 
 ## Data Set
 
