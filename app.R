@@ -11,8 +11,6 @@
 ##                               WELCOME TO SAAM                             ##
 ##     YOUR PERSONAL DATABASE ACCESS TO SONGS, ARTISTS, ALBUMS, AND MORE     ##
 ##                               ENJOY YOUR STAY!                            ##
-## ------------------------------------------------------------------------- ##
-##     Application Credits to Molly Creager and Charlie Bonk, 12/9/2022      ##
 ###############################################################################
 
 ## WARNING: This will check for installed packages and install if they are not.
@@ -396,7 +394,7 @@ server <- function(input, output, session) {
              DateOfMaxRank = dates[rowN],
              rowD = first(which(dHours == max(dHours))),
              Max_dHours = dHours[rowD],
-             DateOfMaxdHours = ifelse(rowD!=n(), dates[rowD+1], NA)) %>%
+             DateOfMaxdHours = dates[rowD]) %>%
       summarize(
         MaximumRank = as.integer(first(MaxRank)),
         DateOfMaxRank = first(DateOfMaxRank),
