@@ -173,7 +173,7 @@ ui <- fluidPage(
               ),
               selected = "-"
             ),
-           
+            
             checkboxGroupInput(
               "tertiarySortingFilter",
               "Include:",
@@ -327,20 +327,25 @@ ui <- fluidPage(
                              selectizeInput(
                                "ytd_summary",
                                "Please select a summary option:",
-                               choices = c("2022", "2021", "Past Year")),
+                               choices = c("2022", "2021", "2020", "Past Year"),
                                selected = "2022"
                              ),
+                             selectizeInput(
+                               "artist_song",
+                               "View by Artist or Song:",
+                               choices = c("Artist", "Song"),
+                               selected = "Artist"
+                             )
                            ),
                            mainPanel(
                              tableOutput("overall_stats"),
-                             dataTableOutput("overall_year_songs"),
-                             dataTableOutput("overall_year_artist")
+                             dataTableOutput("overall_year_artist_song")
                            )
                          )
-    )    
+             )    
+    )
   )
 )
-
 ## END OF UI ##
 
 
@@ -1317,6 +1322,21 @@ server <- function(input, output, session) {
                TotalPlays = ifelse(DateAdded < as.Date("January 01 2021", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
         ungroup()
     }
+    else if(input$ytd_summary == "2020"){
+      cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+        filter(datenum >= as.Date("January 01 2020", format = "%B %d %Y"),
+               datenum < as.Date("January 01 2021", format = "%B %d %Y"),
+               dHours != 0) %>%
+        group_by(SongName) %>%
+        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2020", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlays = ifelse(DateAdded < as.Date("January 01 2020", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup()
+    }
     
   })
   
@@ -1345,33 +1365,43 @@ server <- function(input, output, session) {
   
   output$overall_stats <- renderTable({
     tb <- overall_year() %>%
+      mutate(rowTS = first(which(TotalTime == max(TotalTime))),
+             TopSong = SongName[rowTS]
+             ) %>%
       group_by(SongName) %>%
       filter(row_number()==1) %>%
       ungroup() %>%
-      summarise(HoursListened = sum(TotalTime))
+      mutate(NumberOfArtists = length(unique(Artist))) %>%
+      summarise(HoursListened = sum(TotalTime),
+                TopSong = first(TopSong),
+                NumberOfSongs = n(),
+                NumberOfArtists = first(NumberOfArtists)
+                )
     
     tb %>%
-      select(HoursListened)
+      select(HoursListened, TopSong, NumberOfSongs, NumberOfArtists)
   })
+
   
-  output$overall_year_artist <- renderDataTable({
+  output$overall_year_artist_song <- renderDataTable({
+    if(input$artist_song == "Artist"){
       overall_year() %>%
         group_by(Artist) %>%
         summarise(TotalTime = sum(TotalTime),
                   TotalPlays = sum(TotalPlays)) %>%
         select(Artist, TotalTime, TotalPlays)
-  },server=F,selection='none')
-  
-  
-  
-  output$overall_year_songs <- renderDataTable({
-    overall_year() %>%
+    }
+    else{
+      overall_year() %>%
         group_by(SongName) %>%
-      filter(row_number()==1) %>%
-      select(SongName, Artist, TotalTime, TotalPlays) %>%
-      arrange(desc(TotalTime))
+        filter(row_number()==1) %>%
+        select(SongName, Artist, TotalTime, TotalPlays) %>%
+        arrange(desc(TotalTime))
+    }
   },server=F,selection='none')
   
+  
+
   ### END MISC. SERVER ###
   
   ##### END OF SERVER #####
