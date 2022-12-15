@@ -310,6 +310,7 @@ ui <- fluidPage(
                              tableOutput("month_songs_bourgeoisie")
                            )
                          ),
+                         
                          # Overall Bour. Tab
                          tabPanel(
                            "Overall Bourgeoisie Info",
@@ -317,7 +318,25 @@ ui <- fluidPage(
                              dataTableOutput("overallBourgeoisie"),
                              verbatimTextOutput('selectionB')
                            )
-                         ))
+                         ),
+                         
+                         
+                         tabPanel(
+                           "SAAM Unwrapped",
+                           sidebarPanel(
+                             selectizeInput(
+                               "ytd_summary",
+                               "Please select a summary option:",
+                               choices = c("2022", "2021", "Past Year")),
+                               selected = "2022"
+                             ),
+                           ),
+                           mainPanel(
+                             tableOutput("overall_stats"),
+                             dataTableOutput("overall_year_songs"),
+                             dataTableOutput("overall_year_artist")
+                           )
+                         )
     )    
   )
 )
@@ -1266,12 +1285,48 @@ server <- function(input, output, session) {
     
   })
   
+  overall_year <- reactive({
+    if(input$ytd_summary == "2022"){
+    cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+      filter(datenum >= as.Date("January 01 2022", format = "%B %d %Y"),
+             datenum < as.Date("January 01 2023", format = "%B %d %Y"),
+             dHours != 0) %>%
+        group_by(SongName) %>%
+        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlays = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup()
+    }
+    
+    else if(input$ytd_summary == "2021"){
+      cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+        filter(datenum >= as.Date("January 01 2021", format = "%B %d %Y"),
+               datenum < as.Date("January 01 2022", format = "%B %d %Y"),
+               dHours != 0) %>%
+        group_by(SongName) %>%
+        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2021", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlays = ifelse(DateAdded < as.Date("January 01 2021", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup()
+    }
+    
+  })
+  
   output$month_stats_bourgeoisie <- renderTable({
     month_subset() %>%
       mutate(NumberOfSongs = n()) %>%
       select(NumberOfSongs) %>%
       slice_head(n=1)
   })
+  
   # Monthly Bour. Server
   output$month_songs_bourgeoisie <- renderTable({
     month_subset() %>%
@@ -1283,6 +1338,38 @@ server <- function(input, output, session) {
   # Overall Bour. Server
   output$overallBourgeoisie <- renderDataTable({
     overall_bour_stats()
+  },server=F,selection='none')
+  
+  
+  # Overall Year Server
+  
+  output$overall_stats <- renderTable({
+    tb <- overall_year() %>%
+      group_by(SongName) %>%
+      filter(row_number()==1) %>%
+      ungroup() %>%
+      summarise(HoursListened = sum(TotalTime))
+    
+    tb %>%
+      select(HoursListened)
+  })
+  
+  output$overall_year_artist <- renderDataTable({
+      overall_year() %>%
+        group_by(Artist) %>%
+        summarise(TotalTime = sum(TotalTime),
+                  TotalPlays = sum(TotalPlays)) %>%
+        select(Artist, TotalTime, TotalPlays)
+  },server=F,selection='none')
+  
+  
+  
+  output$overall_year_songs <- renderDataTable({
+    overall_year() %>%
+        group_by(SongName) %>%
+      filter(row_number()==1) %>%
+      select(SongName, Artist, TotalTime, TotalPlays) %>%
+      arrange(desc(TotalTime))
   },server=F,selection='none')
   
   ### END MISC. SERVER ###
