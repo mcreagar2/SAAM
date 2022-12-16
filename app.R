@@ -1478,8 +1478,8 @@ server <- function(input, output, session) {
                TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
         ungroup() %>%
         group_by(SongName) %>%
-        mutate(TotalTimeSong = ifelse(DateAdded < as.Date("January 01 2013", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlaysSong = ifelse(DateAdded < as.Date("January 01 2013", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2013", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlays = ifelse(DateAdded < as.Date("January 01 2013", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
         ungroup()
         
     }
