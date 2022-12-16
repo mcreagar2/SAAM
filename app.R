@@ -327,7 +327,7 @@ ui <- fluidPage(
                              selectizeInput(
                                "ytd_summary",
                                "Please select a summary option:",
-                               choices = c("2022", "2021", "2020", "Past Year"),
+                               choices = c("2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014","2013", "Past Year"),
                                selected = "2022"
                              ),
                              selectizeInput(
@@ -1301,6 +1301,10 @@ server <- function(input, output, session) {
       filter(datenum >= as.Date("January 01 2022", format = "%B %d %Y"),
              datenum < as.Date("January 01 2023", format = "%B %d %Y"),
              dHours != 0) %>%
+        group_by(Artist) %>%
+        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup() %>%
         group_by(SongName) %>%
         mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
                TotalPlays = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
@@ -1317,6 +1321,10 @@ server <- function(input, output, session) {
         filter(datenum >= as.Date("January 01 2021", format = "%B %d %Y"),
                datenum < as.Date("January 01 2022", format = "%B %d %Y"),
                dHours != 0) %>%
+        group_by(Artist) %>%
+        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup() %>%
         group_by(SongName) %>%
         mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2021", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
                TotalPlays = ifelse(DateAdded < as.Date("January 01 2021", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
@@ -1332,10 +1340,148 @@ server <- function(input, output, session) {
         filter(datenum >= as.Date("January 01 2020", format = "%B %d %Y"),
                datenum < as.Date("January 01 2021", format = "%B %d %Y"),
                dHours != 0) %>%
+        group_by(Artist) %>%
+        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup() %>%
         group_by(SongName) %>%
         mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2020", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
                TotalPlays = ifelse(DateAdded < as.Date("January 01 2020", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
         ungroup()
+    }
+    else if(input$ytd_summary == "2019"){
+      cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+        filter(datenum >= as.Date("January 01 2019", format = "%B %d %Y"),
+               datenum < as.Date("January 01 2020", format = "%B %d %Y"),
+               dHours != 0) %>%
+        group_by(Artist) %>%
+        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup() %>%
+        group_by(SongName) %>%
+        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2019", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlays = ifelse(DateAdded < as.Date("January 01 2019", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup()
+    }
+    else if(input$ytd_summary == "2018"){
+      cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+        filter(datenum >= as.Date("January 01 2018", format = "%B %d %Y"),
+               datenum < as.Date("January 01 2019", format = "%B %d %Y"),
+               dHours != 0) %>%
+        group_by(Artist) %>%
+        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup() %>%
+        group_by(SongName) %>%
+        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2018", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlays = ifelse(DateAdded < as.Date("January 01 2018", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup()
+    }
+    else if(input$ytd_summary == "2017"){
+      cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+        filter(datenum >= as.Date("January 01 2017", format = "%B %d %Y"),
+               datenum < as.Date("January 01 2018", format = "%B %d %Y"),
+               dHours != 0) %>%
+        group_by(Artist) %>%
+        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup() %>%
+        group_by(SongName) %>%
+        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2017", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlays = ifelse(DateAdded < as.Date("January 01 2017", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup()
+    }
+    else if(input$ytd_summary == "2016"){
+      cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+        filter(datenum >= as.Date("January 01 2016", format = "%B %d %Y"),
+               datenum < as.Date("January 01 2017", format = "%B %d %Y"),
+               dHours != 0) %>%
+        group_by(Artist) %>%
+        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup() %>%
+        group_by(SongName) %>%
+        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2016", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlays = ifelse(DateAdded < as.Date("January 01 2016", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup()
+    }
+    else if(input$ytd_summary == "2015"){
+      cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+        filter(datenum >= as.Date("January 01 2015", format = "%B %d %Y"),
+               datenum < as.Date("January 01 2016", format = "%B %d %Y"),
+               dHours != 0) %>%
+        group_by(Artist) %>%
+        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup() %>%
+        group_by(SongName) %>%
+        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2015", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlays = ifelse(DateAdded < as.Date("January 01 2015", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup()
+    }
+    else if(input$ytd_summary == "2014"){
+      cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+        filter(datenum >= as.Date("January 01 2014", format = "%B %d %Y"),
+               datenum < as.Date("January 01 2015", format = "%B %d %Y"),
+               dHours != 0) %>%
+        group_by(Artist) %>%
+        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup() %>%
+        group_by(SongName) %>%
+        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2014", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlays = ifelse(DateAdded < as.Date("January 01 2014", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup()
+    }
+    else if(input$ytd_summary == "2013"){
+      cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+        filter(datenum >= as.Date("January 01 2013", format = "%B %d %Y"),
+               datenum < as.Date("January 01 2014", format = "%B %d %Y"),
+               dHours != 0) %>%
+        group_by(Artist) %>%
+        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup() %>%
+        group_by(SongName) %>%
+        mutate(TotalTimeSong = ifelse(DateAdded < as.Date("January 01 2013", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
+               TotalPlaysSong = ifelse(DateAdded < as.Date("January 01 2013", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        ungroup()
+        
     }
     
   })
@@ -1382,14 +1528,15 @@ server <- function(input, output, session) {
       select(HoursListened, TopSong, NumberOfSongs, NumberOfArtists)
   })
 
+  #        summarise(TotalTime = sum(TotalTime), TotalPlays = sum(TotalPlays)) %>%
   
   output$overall_year_artist_song <- renderDataTable({
     if(input$artist_song == "Artist"){
       overall_year() %>%
         group_by(Artist) %>%
-        summarise(TotalTime = sum(TotalTime),
-                  TotalPlays = sum(TotalPlays)) %>%
-        select(Artist, TotalTime, TotalPlays)
+        filter(row_number()==1) %>%
+        select(Artist, TotalTimeA, TotalPlaysA) %>%
+        arrange(desc(TotalTimeA))
     }
     else{
       overall_year() %>%
