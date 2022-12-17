@@ -17,7 +17,7 @@
 ## If you want to read over the documentation on each package before installation,
 ## see "stat850-report.qmd".
 
-requiredPackages <- c('shiny','shinythemes','tidyverse','patchwork','DT', 'highcharter')
+requiredPackages <- c('shiny','shinythemes','tidyverse','patchwork','DT', 'highcharter','lubridate')
 for(package in requiredPackages){
   if(package %in% rownames(installed.packages()) == FALSE) {install.packages(package)}
 }
@@ -31,6 +31,7 @@ library(tidyverse)
 library(patchwork)
 library(DT)
 library(highcharter)
+library(lubridate)
 
 cleaned <- readr::read_csv("data/cleaned.csv")
 cleaned_artist <- readr::read_csv("data/cleaned_artist.csv")
@@ -85,10 +86,14 @@ ui <- fluidPage(
               "Sort By:",
               choices = c(
                 "-",
-                "Most Time Improved",
-                "Most Play Improved",
-                "Most Rank Improved",
-                "Most Value Improved"
+                "Most Time Improved - Past Month",
+                "Most Play Improved - Past Month",
+                "Most Rank Improved - Past Month",
+                "Most Value Improved - Past Month",
+                "Most Time Improved - Overall",
+                "Most Play Improved - Overall",
+                "Most Rank Improved - Overall",
+                "Most Value Improved - Overall"
               ),
               selected = "-"
             ),
@@ -276,13 +281,13 @@ ui <- fluidPage(
                      "album_name",
                      "Album",
                      choices = sort(unique(cleaned$Album)),
-                     selected = "21st Century Breakdown"
+                     selected = "Random Access Memories"
                    )
                  ),
                  
                  mainPanel(
                    tableOutput("overall_album_info"),
-                   tableOutput("album_info"),
+                   dataTableOutput("album_info"),
                    column(width = 6, highchartOutput("albumBig4Plot1"), highchartOutput("albumBig4Plot3")),
                    column(width = 6, highchartOutput("albumBig4Plot2"), highchartOutput("albumBig4Plot4")),
                    highchartOutput("dateTimeListenNCAl")
@@ -307,7 +312,7 @@ ui <- fluidPage(
                            ),
                            mainPanel(
                              tableOutput("month_stats_bourgeoisie"),
-                             tableOutput("month_songs_bourgeoisie")
+                             dataTableOutput("month_songs_bourgeoisie")
                            )
                          ),
                          
@@ -333,7 +338,7 @@ ui <- fluidPage(
                              selectizeInput(
                                "artist_song",
                                "View by Artist or Song:",
-                               choices = c("Artist", "Song"),
+                               choices = c("Artist", "Album", "Song"),
                                selected = "Artist"
                              )
                            ),
@@ -687,7 +692,7 @@ server <- function(input, output, session) {
         
       }
     }
-  },server=F, selection='single')
+  },server=F, selection='single', rownames=FALSE)
   
   observeEvent(input$jumpToIndivSongO,{s = input$overallSong_cell_clicked$value
   updateTabsetPanel(session=getDefaultReactiveDomain(),'songs', selected = "Individual Song Data")
@@ -820,139 +825,251 @@ server <- function(input, output, session) {
   
   # Monthly Song Server
   output$monthSong <- renderDataTable({
-    if("Most Time Improved" == input$secondarySortingFilterMonth){
+    if("Most Time Improved - Past Month" == input$secondarySortingFilterMonth){
       if(("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
         
         subset_plays_by_month() %>%
-          select(SongName, Artist, Album, TimeInHours, TimeInPlays, dHours) %>%
+          select(SongName, Artist, Album, dHours) %>%
           arrange(desc(dHours))
         
       }
       else if(("Album" %in% input$tertiarySortingFilterMonth) & !("Artist" %in% input$tertiarySortingFilterMonth)){
         
         subset_plays_by_month() %>%
-          select(SongName, Album, TimeInHours, TimeInPlays,dHours) %>%
+          select(SongName, Album, dHours) %>%
           arrange(desc(dHours))
         
       }
       else if(!("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
         subset_plays_by_month() %>%
-          select(SongName, Artist, TimeInHours, TimeInPlays,dHours) %>%
+          select(SongName, Artist, dHours) %>%
           arrange(desc(dHours))
         
       }
       else{
         subset_plays_by_month() %>%
-          select(SongName, TimeInHours, TimeInPlays,dHours) %>%
+          select(SongName, dHours) %>%
           arrange(desc(dHours))
         
       }
     }
-    else if("Most Play Improved" == input$secondarySortingFilterMonth){
+    else if("Most Play Improved - Past Month" == input$secondarySortingFilterMonth){
       if(("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
         
         subset_plays_by_month() %>%
-          select(SongName, Artist, Album, TimeInHours, TimeInPlays, dPlays) %>%
+          select(SongName, Artist, Album,  dPlays) %>%
           arrange(desc(dPlays))
         
       }
       else if(("Album" %in% input$tertiarySortingFilterMonth) & !("Artist" %in% input$tertiarySortingFilterMonth)){
         
         subset_plays_by_month() %>%
-          select(SongName, Album, TimeInHours, TimeInPlays,dPlays) %>%
+          select(SongName, Album,dPlays) %>%
           arrange(desc(dPlays))
         
       }
       else if(!("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
         subset_plays_by_month() %>%
-          select(SongName, Artist, TimeInHours, TimeInPlays,dPlays) %>%
+          select(SongName, Artist, dPlays) %>%
           arrange(desc(dPlays))
         
       }
       else{
         subset_plays_by_month() %>%
-          select(SongName, TimeInHours, TimeInPlays,dPlays) %>%
+          select(SongName, dPlays) %>%
           arrange(desc(dPlays))
         
       }
     }
-    else if("Most Rank Improved" == input$secondarySortingFilterMonth){
+    else if("Most Rank Improved - Past Month" == input$secondarySortingFilterMonth){
       if(("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
         
         subset_plays_by_month() %>%
-          select(SongName, Artist, Album, TimeInHours, TimeInPlays, dRank) %>%
+          select(SongName, Artist, Album, dRank) %>%
           arrange(desc(dRank))
         
       }
       else if(("Album" %in% input$tertiarySortingFilterMonth) & !("Artist" %in% input$tertiarySortingFilterMonth)){
         
         subset_plays_by_month() %>%
-          select(SongName, Album, TimeInHours, TimeInPlays,dRank) %>%
+          select(SongName, Album,dRank) %>%
           arrange(desc(dRank))
         
       }
       else if(!("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
         subset_plays_by_month() %>%
-          select(SongName, Artist, TimeInHours, TimeInPlays,dRank) %>%
+          select(SongName, Artist, dRank) %>%
           arrange(desc(dRank))
         
       }
       else{
         subset_plays_by_month() %>%
-          select(SongName, TimeInHours, TimeInPlays,dRank) %>%
+          select(SongName,dRank) %>%
           arrange(desc(dRank))
         
       }
     }
-    else if("Most Value Improved" == input$secondarySortingFilter){
+    else if("Most Value Improved - Past Month" == input$secondarySortingFilter){
       if(("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
         
         subset_plays_by_month() %>%
-          select(SongName, Artist, Album, TimeInHours, TimeInPlays, dValue) %>%
+          select(SongName, Artist, Album, dValue) %>%
           arrange(desc(dValue))
         
       }
       else if(("Album" %in% input$tertiarySortingFilterMonth) & !("Artist" %in% input$tertiarySortingFilterMonth)){
         
         subset_plays_by_month() %>%
-          select(SongName, Album, TimeInHours, TimeInPlays,dValue) %>%
+          select(SongName, Album, dValue) %>%
           arrange(desc(dValue))
         
       }
       else if(!("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
         subset_plays_by_month() %>%
-          select(SongName, Artist, TimeInHours, TimeInPlays,dValue) %>%
+          select(SongName, Artist, dValue) %>%
           arrange(desc(dValue))
         
       }
       else{
         subset_plays_by_month() %>%
-          select(SongName, TimeInHours, TimeInPlays,dValue) %>%
+          select(SongName, dValue) %>%
           arrange(desc(dValue))
         
       }
     }
-    else{
+    else if("Most Time Improved - Overall" == input$secondarySortingFilterMonth){
       if(("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
         
         subset_plays_by_month() %>%
-          select(SongName, Artist, Album, TimeInHours, TimeInPlays) %>%
-          arrange(desc(TimeInHours))
+          select(SongName, Artist, Album, TotaldTime) %>%
+          arrange(desc(TotaldTime))
         
       }
       else if(("Album" %in% input$tertiarySortingFilterMonth) & !("Artist" %in% input$tertiarySortingFilterMonth)){
         
         subset_plays_by_month() %>%
-          select(SongName, Album, TimeInHours, TimeInPlays) %>%
-          arrange(desc(TimeInHours))
+          select(SongName, Album, TotaldTime) %>%
+          arrange(desc(TotaldTime))
         
       }
       else if(!("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
         subset_plays_by_month() %>%
-          select(SongName, Artist, TimeInHours, TimeInPlays) %>%
-          arrange(desc(TimeInHours))
+          select(SongName, Artist, TotaldTime) %>%
+          arrange(desc(TotaldTime))
         
       }
+      else{
+        subset_plays_by_month() %>%
+          select(SongName, TotaldTime) %>%
+          arrange(desc(TotaldTime))
+        
+      }
+    }
+      else if("Most Play Improved - Overall" == input$secondarySortingFilterMonth){
+        if(("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
+          
+          subset_plays_by_month() %>%
+            select(SongName, Artist, Album,  TotaldPlays) %>%
+            arrange(desc(TotaldPlays))
+          
+        }
+        else if(("Album" %in% input$tertiarySortingFilterMonth) & !("Artist" %in% input$tertiarySortingFilterMonth)){
+          
+          subset_plays_by_month() %>%
+            select(SongName, Album,TotaldPlays) %>%
+            arrange(desc(TotaldPlays))
+          
+        }
+        else if(!("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
+          subset_plays_by_month() %>%
+            select(SongName, Artist, TotaldPlays) %>%
+            arrange(desc(TotaldPlays))
+          
+        }
+        else{
+          subset_plays_by_month() %>%
+            select(SongName, TotaldPlays) %>%
+            arrange(desc(TotaldPlays))
+          
+        }
+      }
+      else if("Most Rank Improved - Overall" == input$secondarySortingFilterMonth){
+        if(("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
+          
+          subset_plays_by_month() %>%
+            select(SongName, Artist, Album, TotaldRank) %>%
+            arrange(desc(TotaldRank))
+          
+        }
+        else if(("Album" %in% input$tertiarySortingFilterMonth) & !("Artist" %in% input$tertiarySortingFilterMonth)){
+          
+          subset_plays_by_month() %>%
+            select(SongName, Album,TotaldRank) %>%
+            arrange(desc(TotaldRank))
+          
+        }
+        else if(!("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
+          subset_plays_by_month() %>%
+            select(SongName, Artist, TotaldRank) %>%
+            arrange(desc(TotaldRank))
+          
+        }
+        else{
+          subset_plays_by_month() %>%
+            select(SongName,TotaldRank) %>%
+            arrange(desc(TotaldRank))
+          
+        }
+      }
+      else if("Most Value Improved - Overall" == input$secondarySortingFilter){
+        if(("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
+          
+          subset_plays_by_month() %>%
+            select(SongName, Artist, Album, TotaldValue) %>%
+            arrange(desc(TotaldValue))
+          
+        }
+        else if(("Album" %in% input$tertiarySortingFilterMonth) & !("Artist" %in% input$tertiarySortingFilterMonth)){
+          
+          subset_plays_by_month() %>%
+            select(SongName, Album, TotaldValue) %>%
+            arrange(desc(TotaldValue))
+          
+        }
+        else if(!("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
+          subset_plays_by_month() %>%
+            select(SongName, Artist, TotaldValue) %>%
+            arrange(desc(TotaldValue))
+          
+        }
+        else{
+          subset_plays_by_month() %>%
+            select(SongName, TotaldValue) %>%
+            arrange(desc(TotaldValue))
+          
+        }
+      }
+      else{
+        if(("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
+          
+          subset_plays_by_month() %>%
+            select(SongName, Artist, Album, TimeInHours, TimeInPlays) %>%
+            arrange(desc(TimeInHours))
+          
+        }
+        else if(("Album" %in% input$tertiarySortingFilterMonth) & !("Artist" %in% input$tertiarySortingFilterMonth)){
+          
+          subset_plays_by_month() %>%
+            select(SongName, Album, TimeInHours, TimeInPlays) %>%
+            arrange(desc(TimeInHours))
+          
+        }
+        else if(!("Album" %in% input$tertiarySortingFilterMonth) & ("Artist" %in% input$tertiarySortingFilterMonth)){
+          subset_plays_by_month() %>%
+            select(SongName, Artist, TimeInHours, TimeInPlays) %>%
+            arrange(desc(TimeInHours))
+          
+        }
       else{
         subset_plays_by_month() %>%
           select(SongName, TimeInHours, TimeInPlays) %>%
@@ -960,7 +1077,7 @@ server <- function(input, output, session) {
         
       }
     }
-  },server=F,selection='single')
+  },server=F,selection='single',rownames = FALSE)
   
   observeEvent(input$jumpToIndivSongM,{s = input$monthSong_cell_clicked$value
   updateTabsetPanel(session=getDefaultReactiveDomain(),'songs', selected = "Individual Song Data")
@@ -996,6 +1113,8 @@ server <- function(input, output, session) {
              MaxRank = as.integer(MaxRank)) %>%
       group_by(SongName) %>%
       mutate(TotalTime = last(TimeInHours)) %>%
+      filter(!is.na(TotaldTime)) %>%
+      mutate(TotaldTime = last(TotaldTime)) %>%
       ungroup()
   })
   
@@ -1035,9 +1154,10 @@ server <- function(input, output, session) {
   # Individual Artist Server
   output$artist_song_info <- renderDataTable({
     cln_artist_by_song_info() %>%
-      select(SongName, Album, TotalTime, MaxRank) %>%
-      group_by(SongName, Album, TotalTime, MaxRank) %>%
-      summarise()
+      select(SongName, Album, TotalTime, TotaldTime) %>%
+      group_by(SongName, Album, TotalTime, TotaldTime) %>%
+      summarise() %>%
+      arrange(desc(TotalTime))
     
   })
   
@@ -1162,16 +1282,22 @@ server <- function(input, output, session) {
   cln_album_by_song_info <- reactive({
     cleaned %>%
       filter(Album == input$album_name,!is.na(TimeInHours)) %>%
-      mutate(datenum = as.Date(dates, format = "%B %d %Y"))
+      mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+      group_by(SongName) %>%
+      mutate(TotalTime = last(TimeInHours)) %>%
+      filter(!is.na(TotaldTime)) %>%
+      mutate(TotaldTime = last(TotaldTime)) %>%
+      ungroup()
   })
   
   
   
-  output$album_info <- renderTable({
+  output$album_info <- renderDataTable({
     cln_album_by_song_info() %>%
-      select(SongName, Artist, MaxRank) %>%
-      group_by(SongName, Artist, MaxRank) %>%
-      summarise()
+      select(SongName, Artist, TotalTime, TotaldTime) %>%
+      group_by(SongName, Artist, TotalTime, TotaldTime) %>%
+      summarise()%>%
+      arrange(desc(TotalTime))
     
   })
   
@@ -1307,12 +1433,16 @@ server <- function(input, output, session) {
       filter(datenum >= as.Date("January 01 2022", format = "%B %d %Y"),
              datenum < as.Date("January 01 2023", format = "%B %d %Y")) %>%  #dHours != 0
         group_by(Artist) %>%
-        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTimeA = sum(dHours),
+               TotalPlaysA = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(Album) %>%
+        mutate(TotalTimeAl = sum(dHours),
+               TotalPlaysAl = sum(dPlays)) %>%
         ungroup() %>%
         group_by(SongName) %>%
-        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlays = ifelse(DateAdded < as.Date("January 01 2022", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
         ungroup()
     }
     
@@ -1327,12 +1457,16 @@ server <- function(input, output, session) {
         filter(datenum >= as.Date("January 01 2021", format = "%B %d %Y"),
                datenum < as.Date("January 01 2022", format = "%B %d %Y")) %>%
         group_by(Artist) %>%
-        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2021", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2021", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTimeA = sum(dHours),
+               TotalPlaysA = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(Album) %>%
+        mutate(TotalTimeAl = sum(dHours),
+               TotalPlaysAl = sum(dPlays)) %>%
         ungroup() %>%
         group_by(SongName) %>%
-        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2021", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlays = ifelse(DateAdded < as.Date("January 01 2021", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
         ungroup()
     }
     else if(input$ytd_summary == "2020"){
@@ -1346,12 +1480,16 @@ server <- function(input, output, session) {
         filter(datenum >= as.Date("January 01 2020", format = "%B %d %Y"),
                datenum < as.Date("January 01 2021", format = "%B %d %Y")) %>%
         group_by(Artist) %>%
-        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2020", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2020", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTimeA = sum(dHours),
+               TotalPlaysA = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(Album) %>%
+        mutate(TotalTimeAl = sum(dHours),
+               TotalPlaysAl = sum(dPlays)) %>%
         ungroup() %>%
         group_by(SongName) %>%
-        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2020", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlays = ifelse(DateAdded < as.Date("January 01 2020", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
         ungroup()
     }
     else if(input$ytd_summary == "2019"){
@@ -1365,12 +1503,16 @@ server <- function(input, output, session) {
         filter(datenum >= as.Date("January 01 2019", format = "%B %d %Y"),
                datenum < as.Date("January 01 2020", format = "%B %d %Y")) %>%
         group_by(Artist) %>%
-        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2019", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2019", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTimeA = sum(dHours),
+               TotalPlaysA = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(Album) %>%
+        mutate(TotalTimeAl = sum(dHours),
+               TotalPlaysAl = sum(dPlays)) %>%
         ungroup() %>%
         group_by(SongName) %>%
-        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2019", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlays = ifelse(DateAdded < as.Date("January 01 2019", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
         ungroup()
     }
     else if(input$ytd_summary == "2018"){
@@ -1384,12 +1526,16 @@ server <- function(input, output, session) {
         filter(datenum >= as.Date("January 01 2018", format = "%B %d %Y"),
                datenum < as.Date("January 01 2019", format = "%B %d %Y")) %>%
         group_by(Artist) %>%
-        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2018", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2018", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTimeA = sum(dHours),
+               TotalPlaysA = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(Album) %>%
+        mutate(TotalTimeAl = sum(dHours),
+               TotalPlaysAl = sum(dPlays)) %>%
         ungroup() %>%
         group_by(SongName) %>%
-        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2018", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlays = ifelse(DateAdded < as.Date("January 01 2018", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
         ungroup()
     }
     else if(input$ytd_summary == "2017"){
@@ -1403,12 +1549,16 @@ server <- function(input, output, session) {
         filter(datenum >= as.Date("January 01 2017", format = "%B %d %Y"),
                datenum < as.Date("January 01 2018", format = "%B %d %Y")) %>%
         group_by(Artist) %>%
-        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2017", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2017", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTimeA = sum(dHours),
+               TotalPlaysA = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(Album) %>%
+        mutate(TotalTimeAl = sum(dHours),
+               TotalPlaysAl = sum(dPlays)) %>%
         ungroup() %>%
         group_by(SongName) %>%
-        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2017", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlays = ifelse(DateAdded < as.Date("January 01 2017", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
         ungroup()
     }
     else if(input$ytd_summary == "2016"){
@@ -1422,12 +1572,16 @@ server <- function(input, output, session) {
         filter(datenum >= as.Date("January 01 2016", format = "%B %d %Y"),
                datenum < as.Date("January 01 2017", format = "%B %d %Y")) %>%
         group_by(Artist) %>%
-        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2016", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2016", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTimeA = sum(dHours),
+               TotalPlaysA = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(Album) %>%
+        mutate(TotalTimeAl = sum(dHours),
+               TotalPlaysAl = sum(dPlays)) %>%
         ungroup() %>%
         group_by(SongName) %>%
-        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2016", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlays = ifelse(DateAdded < as.Date("January 01 2016", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
         ungroup()
     }
     else if(input$ytd_summary == "2015"){
@@ -1441,12 +1595,16 @@ server <- function(input, output, session) {
         filter(datenum >= as.Date("January 01 2015", format = "%B %d %Y"),
                datenum < as.Date("January 01 2016", format = "%B %d %Y")) %>%
         group_by(Artist) %>%
-        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2015", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2015", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTimeA = sum(dHours),
+               TotalPlaysA = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(Album) %>%
+        mutate(TotalTimeAl = sum(dHours),
+               TotalPlaysAl = sum(dPlays)) %>%
         ungroup() %>%
         group_by(SongName) %>%
-        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2015", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlays = ifelse(DateAdded < as.Date("January 01 2015", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
         ungroup()
     }
     else if(input$ytd_summary == "2014"){
@@ -1460,12 +1618,16 @@ server <- function(input, output, session) {
         filter(datenum >= as.Date("January 01 2014", format = "%B %d %Y"),
                datenum < as.Date("January 01 2015", format = "%B %d %Y")) %>%
         group_by(Artist) %>%
-        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2014", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2014", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTimeA = sum(dHours),
+               TotalPlaysA = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(Album) %>%
+        mutate(TotalTimeAl = sum(dHours),
+               TotalPlaysAl = sum(dPlays)) %>%
         ungroup() %>%
         group_by(SongName) %>%
-        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2014", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlays = ifelse(DateAdded < as.Date("January 01 2014", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
         ungroup()
     }
     else if(input$ytd_summary == "2013"){
@@ -1479,14 +1641,44 @@ server <- function(input, output, session) {
         filter(datenum >= as.Date("January 01 2013", format = "%B %d %Y"),
                datenum < as.Date("January 01 2014", format = "%B %d %Y")) %>%
         group_by(Artist) %>%
-        mutate(TotalTimeA = ifelse(DateAdded < as.Date("January 01 2013", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlaysA = ifelse(DateAdded < as.Date("January 01 2013", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTimeA = sum(dHours),
+               TotalPlaysA = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(Album) %>%
+        mutate(TotalTimeAl = sum(dHours),
+               TotalPlaysAl = sum(dPlays)) %>%
         ungroup() %>%
         group_by(SongName) %>%
-        mutate(TotalTime = ifelse(DateAdded < as.Date("January 01 2013", format = "%B %d %Y"), sum(dHours), first(TimeInHours)+sum(dHours)),
-               TotalPlays = ifelse(DateAdded < as.Date("January 01 2013", format = "%B %d %Y"), sum(dPlays), first(TimeInPlays)+sum(dPlays))) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
         ungroup()
         
+    }
+    else{ ## if the input selection is past year (e.g., May to May)
+      cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate_all(~replace(., is.na(.), 0)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+        filter(datenum < Sys.Date(),
+               datenum >= Sys.Date() %m-% years(1)) %>%
+        group_by(Artist) %>%
+        mutate(TotalTimeA = sum(dHours),
+               TotalPlaysA = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(Album) %>%
+        mutate(TotalTimeAl = sum(dHours),
+               TotalPlaysAl = sum(dPlays)) %>%
+        ungroup() %>%
+        group_by(SongName) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
+        ungroup()
+
+
+
     }
     
   })
@@ -1499,7 +1691,7 @@ server <- function(input, output, session) {
   })
   
   # Monthly Bour. Server
-  output$month_songs_bourgeoisie <- renderTable({
+  output$month_songs_bourgeoisie <- renderDataTable({
     month_subset() %>%
       arrange(SongName) %>%
       mutate(n = row_number()) %>%
@@ -1542,6 +1734,14 @@ server <- function(input, output, session) {
         filter(row_number()==1) %>%
         select(Artist, TotalTimeA, TotalPlaysA) %>%
         arrange(desc(TotalTimeA))
+    }
+    else if(input$artist_song == "Album"){
+      overall_year() %>%
+        group_by(Album) %>%
+        filter(row_number()==1) %>%
+        filter(Album != "-") %>%
+        select(Album, TotalTimeAl, TotalPlaysAl) %>%
+        arrange(desc(TotalTimeAl))
     }
     else{
       overall_year() %>%
