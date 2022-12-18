@@ -346,22 +346,29 @@ ui <- fluidPage(
                              tableOutput("overall_stats"),
                              dataTableOutput("overall_year_artist_song")
                            )
-                         )
-                         # ,
-                         # tabPanel("Comparisons - Songs",
-                         #          sidebarPanel(
-                         #            selectizeInput(
-                         #              "songs_to_graph",
-                         #              "Please select songs to chart:",
-                         #              choices = sort(unique(cleaned$SongName)),
-                         #              multiple = TRUE,
-                         #              selected = "Instant Crush (feat. Julian Casablancas)"
-                         #            )
-                         #          ),
-                         #          mainPanel(
-                         #            highchartOutput("songs_compare_graph")
-                         #          ))
-                         
+                         ),
+                         tabPanel("Comparisons - Songs",
+                                  sidebarPanel(
+                                    selectizeInput(
+                                      "song_compare1",
+                                      "Please select Song 1 to chart:",
+                                      choices = sort(unique(cleaned$SongName)),
+                                      selected = "Instant Crush (feat. Julian Casablancas)"
+                                    ),
+                                    selectizeInput(
+                                      "song_compare2",
+                                      "Please select Song 2 to chart:",
+                                      choices = sort(unique(cleaned$SongName)),
+                                      selected = "State of Grace"
+                                    ),
+
+                         br(),
+                         actionButton("button_for_SC", "Graph!")
+                                  ),
+                                  mainPanel(
+                                    plotOutput("songs_compare_graph")
+                                  ))
+
              )    
     )
   )
@@ -2054,42 +2061,38 @@ server <- function(input, output, session) {
   
 
   
+  observeEvent(input$button_for_SC, {
+    #cat("Showing", input$song_compare1, "and", input$song_compare2)
+  })
   
-  output$songs_compare_graph <- renderHighchart({
+  tb <- eventReactive(input$button_for_SC, {
+    cleaned %>%
+      mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+      filter(SongName == input$song_compare1 | SongName == input$song_compare2) %>%
+      filter(!is.na(TimeInHours))
+  })
+  
+  
+  output$songs_compare_graph <- renderPlot({
     
+    
+    tb() %>%
+    ggplot(aes(x = datenum, y = TimeInHours)) + 
+      # add points
+      geom_line(aes(color = SongName)) + 
+      ggtitle("Cumulative Hours Listened Over Time") + 
+      xlab("Date") + 
+      ylab("Hours")
+    
+    # SC <-  hchart(
+    #   tb, "line",
+    #   hcaes(x =  datenum, y = TimeInHours, group = SongName),
+    #   showInLegend = TRUE
+    # ) %>%
+    #   hc_title(text = "Cumulative Hours Listened Over Time")
+    # 
+    # SC
 
-    
-    
-    if(length(input$song_compare) > 0){
-      
-      tb <-  cleaned %>%
-        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
-        filter(SongName == input$song_compare[1])
-      
-      for(i in 2:length(input$song_compare)){
-        tb2 <-cleaned %>%
-          mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
-          filter(SongName == input$song_compare[i]) %>%
-          filter(!is.na(TimeInHours))
-        
-        nameslist <- intersect(names(tb), names(tb2))
-        
-        tb <- left_join(tb, tb2, by = nameslist)
-        
-      }
-    
-    
-    
-    SC <-  hchart(
-      tb, "line",
-      hcaes(x =  datenum, y = TimeInHours, group = SongName),
-      showInLegend = TRUE
-    ) %>%
-      hc_title(text = "Cumulative Hours Listened Over Time")
-    
-    SC
-    
-    }
   })
   
 
@@ -2106,21 +2109,3 @@ server <- function(input, output, session) {
 shinyApp(ui = ui, server = server)
 
 ### ALL DONE :) ###
-
-## I think I'm just gonna have to undo the overall year code into separate blocks for songs/artists/albums...
-
-# B <- cleaned_album %>%
-#   filter(!is.na(TimeInHours)) %>%
-#   mutate_all(~replace(., is.na(.), 0)) %>%
-#   mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
-#   group_by(Album) %>%
-#   mutate(DateAdded = min(datenum)) %>%
-#   ungroup() %>%
-#   filter(datenum >= as.Date("January 01 2022", format = "%B %d %Y"),
-#          datenum < as.Date("January 01 2023", format = "%B %d %Y")) %>%
-#   group_by(Album) %>%
-#   mutate(TotalTimeAl = sum(dHours),
-#          TotalPlaysAl = sum(dPlays)) %>%
-#   ungroup()
-
-  
