@@ -267,7 +267,8 @@ ui <- fluidPage(
                    dataTableOutput("artist_song_info"),
                    column(width = 6, highchartOutput("artistBig4Plot1"), highchartOutput("artistBig4Plot3")),
                    column(width = 6, highchartOutput("artistBig4Plot2"), highchartOutput("artistBig4Plot4")),
-                   highchartOutput("dateTimeListenNCA")
+                   highchartOutput("dateTimeListenNCA"),
+                   plotOutput("artist_song_graph")
                  )
                )
              )),
@@ -295,7 +296,8 @@ ui <- fluidPage(
                    dataTableOutput("album_info"),
                    column(width = 6, highchartOutput("albumBig4Plot1"), highchartOutput("albumBig4Plot3")),
                    column(width = 6, highchartOutput("albumBig4Plot2"), highchartOutput("albumBig4Plot4")),
-                   highchartOutput("dateTimeListenNCAl")
+                   highchartOutput("dateTimeListenNCAl"),
+                   plotOutput("album_song_graph")
                  )
                ))),
     
@@ -313,6 +315,12 @@ ui <- fluidPage(
                                "Month",
                                choices = unique(colnames(db_misc)[5:ncol(db_misc)-2]),
                                selected = unique(colnames(db_misc)[5:ncol(db_misc)-2])[-1]
+                             ),
+                             checkboxGroupInput(
+                               "tertiarySortingFilterBour",
+                               "Include:",
+                               choices = c("SongName", "Artist", "Album", "CurrentStreak"),
+                               selected = "SongName"
                              ),
                            ),
                            mainPanel(
@@ -423,7 +431,7 @@ server <- function(input, output, session) {
       spm <- spm[c(input$tertiarySortingFilterMonth, "dValue")]
       
       spm %>% filter(!is.na(dValue)) %>%
-        arrange(desc(dValue))
+        arrange(desc(dValue)) 
     }
     else if("Most Time Improved - Overall" == input$secondarySortingFilterMonth){
       spm <- spm[c(input$tertiarySortingFilterMonth, "TotaldTime")]
@@ -475,6 +483,8 @@ server <- function(input, output, session) {
       group_by(SongID) %>%
       mutate(DateOfOccurrence = last(dates)) %>%
       ungroup()
+    
+
   })
   
   
@@ -951,7 +961,9 @@ server <- function(input, output, session) {
     cleaned %>%
       filter(Artist == input$artist_name, !is.na(TimeInHours)) %>%
       mutate(datenum = as.Date(dates, format = "%B %d %Y"),
-             MaxRank = as.integer(MaxRank)) %>%
+             rowN = ifelse(!is.na(RankOutOfN), first(which(RankOutOfN == max(RankOutOfN))), NA),
+             DateOfMaxRank = dates[rowN],
+             MaxRank = RankOutOfN[rowN]) %>%
       group_by(SongName) %>%
       mutate(TotalTime = last(TimeInHours)) %>%
       filter(!is.na(TotaldTime)) %>%
@@ -964,7 +976,9 @@ server <- function(input, output, session) {
     cleaned_artist %>%
       filter(Artist == input$artist_name, !is.na(TimeInHours)) %>%
       mutate(datenum = as.Date(dates, format = "%B %d %Y"),
-             MaxRank = as.integer(MaxRank))
+             rowN = ifelse(!is.na(RankOutOfN), first(which(RankOutOfN == max(RankOutOfN))), NA),
+             DateOfMaxRank = dates[rowN],
+             MaxRank = RankOutOfN[rowN])
   })
   
   
@@ -973,14 +987,21 @@ server <- function(input, output, session) {
       filter(Artist == input$artist_name) %>%
       filter(!is.na(TimeInHours)) %>%
       mutate(datenum = as.Date(dates, format = "%B %d %Y"),
-             MaxRank = as.integer(MaxRank),
-             rowN = first(which(RankOutOfN == MaxRank)),
-             DateOfMaxRank = dates[rowN]) %>%
+             rowN = ifelse(!is.na(RankOutOfN), first(which(RankOutOfN == max(RankOutOfN))), NA),
+             DateOfMaxRank = dates[rowN],
+             MaxRank = RankOutOfN[rowN]) %>%
       filter(!is.na(SongCount)) %>%
       summarize(MaximumRank = as.integer(max(MaxRank)),
                 SongCount = as.integer(max(SongCount)),
                 DateOfMaxRank = first(DateOfMaxRank),
                 HoursPer = max(HoursPer))
+  })
+  
+  artist_songs_for_graphing <- reactive({
+    cleaned %>%
+      mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+      filter(Artist == input$artist_name) %>%
+      filter(!is.na(TimeInHours)) 
   })
   
   
@@ -1017,6 +1038,7 @@ server <- function(input, output, session) {
       summarise(NumberOf24HrSongs = first(NumberOf24HrSongs)) %>%
       select(NumberOf24HrSongs)
   })
+  
   
   
   output$artistBig4Plot1 <- renderHighchart({
@@ -1112,6 +1134,16 @@ server <- function(input, output, session) {
       
     })
   
+  output$artist_song_graph <- renderPlot({
+    artist_songs_for_graphing() %>%
+      ggplot(aes(x = datenum, y = TimeInHours)) + 
+      # add points
+      geom_line(aes(color = SongName)) + 
+      ggtitle("Cumulative Hours Listened Over Time") + 
+      xlab("Date") + 
+      ylab("Hours")
+  })
+  
   ### END OF ARTISTS SERVER ###
   
   ########## ALBUMS #############
@@ -1141,6 +1173,13 @@ server <- function(input, output, session) {
       ungroup()
   })
   
+  
+  album_songs_for_graphing <- reactive({
+    cleaned %>%
+      mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+      filter(Album == input$album_name) %>%
+      filter(!is.na(TimeInHours)) 
+  })
   
   
   output$album_info <- renderDataTable({
@@ -1251,6 +1290,19 @@ server <- function(input, output, session) {
         hc_title(text = "Hours Listened by Date")
     })
   
+  
+  
+  output$album_song_graph <- renderPlot({
+    album_songs_for_graphing() %>%
+      ggplot(aes(x = datenum, y = TimeInHours)) + 
+      # add points
+      geom_line(aes(color = SongName)) + 
+      ggtitle("Cumulative Hours Listened Over Time") + 
+      xlab("Date") + 
+      ylab("Hours")
+  })
+  
+  
   ### END ALBUMS SERVER ###
   
   
@@ -1280,9 +1332,13 @@ server <- function(input, output, session) {
 
   
   month_subset <- reactive({
-    db_misc %>%
-      mutate(CurrentStreak = as.integer(CurrentStreak)) %>%
-      select(input$month_name_bourgeoisie, SongName, Artist, Album, CurrentStreak) %>%
+    
+    bpm <- db_misc %>%
+      mutate(CurrentStreak = as.integer(CurrentStreak))
+    
+    bpm <- bpm[c(input$tertiarySortingFilterBour, input$month_name_bourgeoisie)]
+    
+    bpm %>%
       na.omit()
     
   })
@@ -1825,9 +1881,7 @@ server <- function(input, output, session) {
   # Monthly Bour. Server
   output$month_songs_bourgeoisie <- renderDataTable({
     month_subset() %>%
-      arrange(SongName) %>%
-      mutate(n = row_number()) %>%
-      select(n, SongName, Artist, Album, CurrentStreak)
+      select(input$tertiarySortingFilterBour)
   })
   
   # Overall Bour. Server
