@@ -39,6 +39,9 @@ cleaned_album <- readr::read_csv("data/cleaned_album.csv")
 db_misc <- readr::read_csv("data/db_misc.csv", guess_max = 1800)
 
 
+
+
+
 ### UI ###
 ui <- fluidPage(
   theme = shinytheme("flatly"),
@@ -268,7 +271,8 @@ ui <- fluidPage(
                    column(width = 6, highchartOutput("artistBig4Plot1"), highchartOutput("artistBig4Plot3")),
                    column(width = 6, highchartOutput("artistBig4Plot2"), highchartOutput("artistBig4Plot4")),
                    highchartOutput("dateTimeListenNCA"),
-                   plotOutput("artist_song_graph")
+                   plotOutput("artist_song_graph"),
+                   checkboxGroupInput("songnameforgraph", "Select songs to graph", choices = NULL)
                  )
                )
              )),
@@ -297,7 +301,9 @@ ui <- fluidPage(
                    column(width = 6, highchartOutput("albumBig4Plot1"), highchartOutput("albumBig4Plot3")),
                    column(width = 6, highchartOutput("albumBig4Plot2"), highchartOutput("albumBig4Plot4")),
                    highchartOutput("dateTimeListenNCAl"),
-                   plotOutput("album_song_graph")
+                   plotOutput("album_song_graph"),
+                   checkboxGroupInput("songnameforgraph2", "Select songs to graph", choices = NULL)
+                   
                  )
                ))),
     
@@ -431,7 +437,7 @@ server <- function(input, output, session) {
       spm <- spm[c(input$tertiarySortingFilterMonth, "dValue")]
       
       spm %>% filter(!is.na(dValue)) %>%
-        arrange(desc(dValue)) 
+        arrange(desc(dValue))
     }
     else if("Most Time Improved - Overall" == input$secondarySortingFilterMonth){
       spm <- spm[c(input$tertiarySortingFilterMonth, "TotaldTime")]
@@ -997,11 +1003,32 @@ server <- function(input, output, session) {
                 HoursPer = max(HoursPer))
   })
   
+
+  
+  observe({
+    artist <- input$artist_name
+    
+    songsub <- cleaned %>%
+      mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+      filter(Artist == artist) %>%
+      filter(!is.na(TimeInHours)) %>%
+      select(SongName)
+    
+    
+    updateCheckboxGroupInput(session, "songnameforgraph", "Select songs to graph", choices = unique(songsub$SongName), selected = unique(songsub$SongName)[1])
+    
+    
+    
+  })
+  
   artist_songs_for_graphing <- reactive({
     cleaned %>%
       mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
       filter(Artist == input$artist_name) %>%
-      filter(!is.na(TimeInHours)) 
+      filter(!is.na(TimeInHours)) %>%
+      filter(SongName %in% input$songnameforgraph)
+    
+    
   })
   
   
@@ -1134,6 +1161,7 @@ server <- function(input, output, session) {
       
     })
   
+  
   output$artist_song_graph <- renderPlot({
     artist_songs_for_graphing() %>%
       ggplot(aes(x = datenum, y = TimeInHours)) + 
@@ -1174,11 +1202,31 @@ server <- function(input, output, session) {
   })
   
   
+  observe({
+    album <- input$album_name
+    
+    songsub2 <- cleaned %>%
+      mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+      filter(Album == album) %>%
+      filter(!is.na(TimeInHours)) %>%
+      select(SongName)
+    
+    
+    updateCheckboxGroupInput(session, "songnameforgraph2", "Select songs to graph", choices = unique(songsub2$SongName), selected = unique(songsub2$SongName)[1])
+    
+    
+    
+  })
+  
+  
   album_songs_for_graphing <- reactive({
+    
     cleaned %>%
       mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
       filter(Album == input$album_name) %>%
-      filter(!is.na(TimeInHours)) 
+      filter(!is.na(TimeInHours)) %>%
+      filter(SongName %in% input$songnameforgraph2)
+    
   })
   
   
@@ -1293,6 +1341,7 @@ server <- function(input, output, session) {
   
   
   output$album_song_graph <- renderPlot({
+  
     album_songs_for_graphing() %>%
       ggplot(aes(x = datenum, y = TimeInHours)) + 
       # add points
