@@ -1575,8 +1575,9 @@ server <- function(input, output, session) {
     overall_year_album <- reactive({
 
       if(input$ytd_summary == "2022"){
-        cleaned_album %>%
-          filter(!is.na(TimeInHours)) %>%
+        cleaned %>%
+          filter(Album != "-",
+                 !is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
           mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
           group_by(Album) %>%
@@ -1591,8 +1592,9 @@ server <- function(input, output, session) {
       }
       
       else if(input$ytd_summary == "2021"){
-        cleaned_album %>%
-          filter(!is.na(TimeInHours)) %>%
+        cleaned %>%
+          filter(Album != "-",
+                 !is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
           mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
           group_by(Album) %>%
@@ -1606,8 +1608,9 @@ server <- function(input, output, session) {
           ungroup()
       }
       else if(input$ytd_summary == "2020"){
-        cleaned_album %>%
-          filter(!is.na(TimeInHours)) %>%
+        cleaned %>%
+          filter(Album != "-",
+                 !is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
           mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
           group_by(Album) %>%
@@ -1621,8 +1624,9 @@ server <- function(input, output, session) {
           ungroup()
       }
       else if(input$ytd_summary == "2019"){
-        cleaned_album %>%
-          filter(!is.na(TimeInHours)) %>%
+        cleaned %>%
+          filter(Album != "-",
+                 !is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
           mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
           group_by(Album) %>%
@@ -1636,8 +1640,9 @@ server <- function(input, output, session) {
           ungroup()
       }
       else if(input$ytd_summary == "2018"){
-        cleaned_album %>%
-          filter(!is.na(TimeInHours)) %>%
+        cleaned %>%
+          filter(Album != "-",
+                 !is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
           mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
           group_by(Album) %>%
@@ -1651,8 +1656,9 @@ server <- function(input, output, session) {
           ungroup()
       }
       else if(input$ytd_summary == "2017"){
-        cleaned_album %>%
-          filter(!is.na(TimeInHours)) %>%
+        cleaned %>%
+          filter(Album != "-",
+                 !is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
           mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
           group_by(Album) %>%
@@ -1666,8 +1672,9 @@ server <- function(input, output, session) {
           ungroup()
       }
       else if(input$ytd_summary == "2016"){
-        cleaned_album %>%
-          filter(!is.na(TimeInHours)) %>%
+        cleaned %>%
+          filter(Album != "-",
+                 !is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
           mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
           group_by(Album) %>%
@@ -1681,8 +1688,9 @@ server <- function(input, output, session) {
           ungroup()
       }
       else if(input$ytd_summary == "2015"){
-        cleaned_album %>%
-          filter(!is.na(TimeInHours)) %>%
+        cleaned %>%
+          filter(Album != "-",
+                 !is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
           mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
           group_by(Album) %>%
@@ -1696,8 +1704,9 @@ server <- function(input, output, session) {
           ungroup()
       }
       else if(input$ytd_summary == "2014"){
-        cleaned_album %>%
-          filter(!is.na(TimeInHours)) %>%
+        cleaned %>%
+          filter(Album != "-",
+                 !is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
           mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
           group_by(Album) %>%
@@ -1711,8 +1720,9 @@ server <- function(input, output, session) {
           ungroup()
       }
       else if(input$ytd_summary == "2013"){
-        cleaned_album %>%
-          filter(!is.na(TimeInHours)) %>%
+        cleaned %>%
+          filter(Album != "-",
+                 !is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
           mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
           group_by(Album) %>%
@@ -1727,8 +1737,9 @@ server <- function(input, output, session) {
         
       }
       else{ ## if the input selection is past year (e.g., May to May)
-        cleaned_album %>%
-          filter(!is.na(TimeInHours)) %>%
+        cleaned %>%
+          filter(Album != "-",
+            !is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
           mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
           group_by(Album) %>%
