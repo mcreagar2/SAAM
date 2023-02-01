@@ -69,7 +69,8 @@ ui <- fluidPage(
                         choices = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")
                         )),
                         selected = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")))[-1]),
-            
+            #actionButton("previous_month", "Previous"),
+            #actionButton("next_month", "Next"),
             sliderInput(
               "topHrsMonth",
               "Hours",
@@ -110,7 +111,7 @@ ui <- fluidPage(
                 "TimeInHours",
                 "TimeInPlays"
               ),
-              selected = "SongName"
+              selected = c("SongName", "TimeInHours")
             )
             ,actionButton('jumpToIndivSongM', "Song Information")
           ),
@@ -400,6 +401,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   ###### SONGS ###########
+  
   subset_plays_by_month <- reactive({
     spm <- cleaned %>%
       mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
@@ -408,65 +410,114 @@ server <- function(input, output, session) {
         TimeInHours >= input$topHrsMonth[1],
         TimeInHours <= input$topHrsMonth[2],
         TimeInPlays >= input$topPlayedMonth[1],
-        TimeInPlays <= input$topPlayedMonth[2],
-        datenum == as.Date(input$month_choice_songs))
+        TimeInPlays <= input$topPlayedMonth[2])
+    
+    
     
     if("Most Time Improved - Past Month" == input$secondarySortingFilterMonth){
-      spm <- spm[c(input$tertiarySortingFilterMonth, "dHours")]
+      spm <- spm[c(input$tertiarySortingFilterMonth, "dHours", "datenum")]
       
       spm %>% filter(!is.na(dHours)) %>%
-        arrange(desc(dHours))
+        arrange(desc(dHours)) %>% 
+        filter(datenum == as.Date(input$month_choice_songs)) %>%
+        select(-matches("datenum"))
+
       
     }
     else if("Most Play Improved - Past Month" == input$secondarySortingFilterMonth){
       
-      spm <- spm[c(input$tertiarySortingFilterMonth, "dPlays")]
+      spm <- spm[c(input$tertiarySortingFilterMonth, "dPlays", "datenum")]
       
       spm %>% filter(!is.na(dPlays)) %>%
-        arrange(desc(dPlays))
+        arrange(desc(dPlays)) %>% 
+        filter(datenum == as.Date(input$month_choice_songs)) %>%
+        select(-matches("datenum"))
+      
       
     }
     else if("Most Rank Improved - Past Month" == input$secondarySortingFilterMonth){
       
-      spm <- spm[c(input$tertiarySortingFilterMonth, "dRank")]
+      spm <- spm[c(input$tertiarySortingFilterMonth, "dRank", "datenum")]
       
       spm %>% filter(!is.na(dRank)) %>%
-        arrange(desc(dRank))
+        arrange(desc(dRank)) %>% 
+        filter(datenum == as.Date(input$month_choice_songs)) %>%
+        select(-matches("datenum"))
+      
+
     }
     else if("Most Value Improved - Past Month" == input$secondarySortingFilterMonth){
-      spm <- spm[c(input$tertiarySortingFilterMonth, "dValue")]
+      spm <- spm[c(input$tertiarySortingFilterMonth, "dValue", "datenum")]
       
       spm %>% filter(!is.na(dValue)) %>%
-        arrange(desc(dValue))
+        arrange(desc(dValue)) %>% 
+        filter(datenum == as.Date(input$month_choice_songs)) %>%
+        select(-matches("datenum"))
+      
+
     }
     else if("Most Time Improved - Overall" == input$secondarySortingFilterMonth){
-      spm <- spm[c(input$tertiarySortingFilterMonth, "TotaldTime")]
+      spm <- spm[c(input$tertiarySortingFilterMonth, "TotaldTime", "datenum")]
       
       spm %>% filter(!is.na(TotaldTime)) %>%
-        arrange(desc(TotaldTime))
+        arrange(desc(TotaldTime)) %>% 
+        filter(datenum == as.Date(input$month_choice_songs)) %>%
+        select(-matches("datenum"))
+      
     }
     else if("Most Play Improved - Overall" == input$secondarySortingFilterMonth){
-      spm <- spm[c(input$tertiarySortingFilterMonth, "TotaldPlays")]
+      
+      
+      spm <- spm[c(input$tertiarySortingFilterMonth, "TotaldPlays", "datenum")]
       
       spm %>% filter(!is.na(TotaldPlays)) %>%
-        arrange(desc(TotaldPlays))
+        arrange(desc(TotaldPlays)) %>% 
+        filter(datenum == as.Date(input$month_choice_songs)) %>%
+        select(-matches("datenum"))
+      
     }
     else if("Most Rank Improved - Overall" == input$secondarySortingFilterMonth){
-      spm <- spm[c(input$tertiarySortingFilterMonth, "TotaldRank")]
+      spm <- spm[c(input$tertiarySortingFilterMonth, "TotaldRank", "datenum")]
       
       spm %>% filter(!is.na(TotaldRank)) %>%
-        arrange(desc(TotaldRank))
+        arrange(desc(TotaldRank)) %>% 
+        filter(datenum == as.Date(input$month_choice_songs)) %>%
+        select(-matches("datenum"))
+      
     }
     else if("Most Value Improved - Overall" == input$secondarySortingFilterMonth){
-      spm <- spm[c(input$tertiarySortingFilterMonth, "TotaldValue")]
+      spm <- spm[c(input$tertiarySortingFilterMonth, "TotaldValue", "datenum")]
       
       spm %>% filter(!is.na(TotaldValue)) %>%
-        arrange(desc(TotaldValue))
+        arrange(desc(TotaldValue)) %>% 
+        filter(datenum == as.Date(input$month_choice_songs)) %>%
+        select(-matches("datenum"))
     }
     else{
-        spm <- spm[input$tertiarySortingFilterMonth]
+        spm <- spm[c(input$tertiarySortingFilterMonth, "datenum")]
         
-        spm
+        if("TimeInHours" %in% input$tertiarySortingFilterMonth){
+          spm %>%
+            arrange(desc(TimeInHours)) %>% 
+            filter(datenum == as.Date(input$month_choice_songs)) %>%
+            select(-matches("datenum"))
+        }
+        else if("TimeInPlays" %in% input$tertiarySortingFilterMonth){
+          spm %>%
+            arrange(desc(TimeInPlays)) %>% 
+            filter(datenum == as.Date(input$month_choice_songs)) %>%
+            select(-matches("datenum"))
+        }
+        else{
+          
+          
+          spm %>%
+            filter(datenum == as.Date(input$month_choice_songs)) %>%
+            select(-matches("datenum"))
+          
+        }
+        
+        
 
     }
   })
@@ -800,6 +851,8 @@ server <- function(input, output, session) {
   updateTabsetPanel(session=getDefaultReactiveDomain(),'songs', selected = "Individual Song Data")
   updateSelectizeInput(session=getDefaultReactiveDomain(), 'song_name',selected=s)})
   
+  
+  
   # Individual Song Server
   output$song_info <- renderTable({
     song_static_info() %>%
@@ -923,6 +976,7 @@ server <- function(input, output, session) {
     })
   
   
+  
   observeEvent(input$jumpToIndivArtist,{s = input$overallArtist_cell_clicked$value
   updateTabsetPanel(session=getDefaultReactiveDomain(),'artists', selected = "Individual Artist Data")
   updateSelectizeInput(session=getDefaultReactiveDomain(), 'artist_name',selected=s)})
@@ -932,13 +986,19 @@ server <- function(input, output, session) {
   # Monthly Song Server
   output$monthSong <- renderDataTable({
     
-      subset_plays_by_month()
+    
+    datatable(subset_plays_by_month(),
+              options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                "pageLength" = 25)) # removed a rownames=FALSE to see if this is good
     
   },server=F,selection='single',rownames = FALSE)
   
   observeEvent(input$jumpToIndivSongM,{s = input$monthSong_cell_clicked$value
   updateTabsetPanel(session=getDefaultReactiveDomain(),'songs', selected = "Individual Song Data")
   updateSelectizeInput(session=getDefaultReactiveDomain(), 'song_name',selected=s)})
+  
+  # observeEvent(input$back,{s = input$monthSong_cell_clicked$value
+  # updateSelectizeInput(session=getDefaultReactiveDomain(), 'song_name',selected=s)})
   
 ### END OF SONGS SERVER ###
   
