@@ -213,6 +213,88 @@ ui <- fluidPage(
                id= 'artists',
                type = "tabs",
                
+               # By Month Artists Tab
+               tabPanel(
+                 "By Month",
+                 
+                 sidebarPanel(
+                   selectInput("month_choice_artist",
+                               "Choose Month:",
+                               choices = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")
+                               )),
+                               selected = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")))[-1]),
+                   #actionButton("previous_month", "Previous"),
+                   #actionButton("next_month", "Next"),
+                   sliderInput(
+                     "monthArtistHrs",
+                     "Hours",
+                     min = 0,
+                     max = 2000,
+                     value = c(0, 2000)
+                   ),
+                   sliderInput(
+                     "monthArtistPlayed",
+                     "Plays",
+                     min = 0,
+                     max = 25000,
+                     value = c(0, 25000)
+                   ),
+                   selectInput(
+                     "secondarySortingFilterArtistMonth",
+                     "Sort By:",
+                     choices = c(
+                       "-",
+                       "Most Time Improved - Past Month",
+                       "Most Play Improved - Past Month",
+                       "Most Rank Improved - Past Month",
+                       "Most Value Improved - Past Month",
+                       "Most Time Improved - Overall",
+                       "Most Play Improved - Overall",
+                       "Most Rank Improved - Overall",
+                       "Most Value Improved - Overall"
+                     ),
+                     selected = "-"
+                   ),
+                   checkboxGroupInput(
+                     "tertiarySortingFilterArtistMonth",
+                     "Include:",
+                     choices = c(
+                       "Artist",
+                       "TimeInHours",
+                       "TimeInPlays"
+                     ),
+                     selected = c("Artist", "TimeInHours")
+                   ),
+                   actionButton('jumpToIndivArtistM', "Artist Information")
+                 ),
+                 mainPanel(dataTableOutput("monthArtist"))
+               ),
+               
+               # Individual Artist Tab
+               tabPanel(
+                 "Individual Artist Data",
+                 
+                 sidebarPanel(
+                   selectizeInput(
+                     "artist_name",
+                     "Artist",
+                     choices = sort(unique(cleaned$Artist)),
+                     selected = "Daft Punk"
+                   )
+                 ),
+                 
+                 mainPanel(
+                   tableOutput("overall_artist_info"),
+                   tableOutput("counting_artist_24hr_songs"),
+                   dataTableOutput("artist_song_info"),
+                   column(width = 6, highchartOutput("artistBig4Plot1"), highchartOutput("artistBig4Plot3")),
+                   column(width = 6, highchartOutput("artistBig4Plot2"), highchartOutput("artistBig4Plot4")),
+                   highchartOutput("dateTimeListenNCA"),
+                   plotOutput("artist_song_graph"),
+                   checkboxGroupInput("songnameforgraph", "Select songs to graph", choices = NULL)
+                 )
+               ),
+               
                # Overall Artist Tab
                tabPanel(
                  "Overall Artist Data",
@@ -250,41 +332,75 @@ ui <- fluidPage(
                  ),
                  mainPanel(dataTableOutput("overallArtist"))
                  
-               ),
-               
-               # Individual Artist Tab
-               tabPanel(
-                 "Individual Artist Data",
-                 
-                 sidebarPanel(
-                   selectizeInput(
-                     "artist_name",
-                     "Artist",
-                     choices = sort(unique(cleaned$Artist)),
-                     selected = "Daft Punk"
-                   )
-                 ),
-                 
-                 mainPanel(
-                   tableOutput("overall_artist_info"),
-                   tableOutput("counting_artist_24hr_songs"),
-                   dataTableOutput("artist_song_info"),
-                   column(width = 6, highchartOutput("artistBig4Plot1"), highchartOutput("artistBig4Plot3")),
-                   column(width = 6, highchartOutput("artistBig4Plot2"), highchartOutput("artistBig4Plot4")),
-                   highchartOutput("dateTimeListenNCA"),
-                   plotOutput("artist_song_graph"),
-                   checkboxGroupInput("songnameforgraph", "Select songs to graph", choices = NULL)
-                 )
                )
              )),
     
     
     # Main Albums Tab
-    # Also the only Albumns tab: There are no subtabs.
+    # Also the only Albums tab: There are no subtabs.
     tabPanel("Albums",
              tabsetPanel(
                id = 'albums',
                type = "tabs",
+               
+               # By Month Album Tab
+               tabPanel(
+                 "By Month",
+                 
+                 sidebarPanel(
+                   selectInput("month_choice_album",
+                               "Choose Month:",
+                               choices = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")
+                               )),
+                               selected = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")))[-1]),
+                   #actionButton("previous_month", "Previous"),
+                   #actionButton("next_month", "Next"),
+                   sliderInput(
+                     "monthAlbumHrs",
+                     "Hours",
+                     min = 0,
+                     max = 2000,
+                     value = c(0, 2000)
+                   ),
+                   sliderInput(
+                     "monthAlbumPlayed",
+                     "Plays",
+                     min = 0,
+                     max = 25000,
+                     value = c(0, 25000)
+                   ),
+                   selectInput(
+                     "secondarySortingFilterAlbumMonth",
+                     "Sort By:",
+                     choices = c(
+                       "-",
+                       "Most Time Improved - Past Month",
+                       "Most Play Improved - Past Month",
+                       "Most Rank Improved - Past Month",
+                       "Most Value Improved - Past Month",
+                       "Most Time Improved - Overall",
+                       "Most Play Improved - Overall",
+                       "Most Rank Improved - Overall",
+                       "Most Value Improved - Overall"
+                     ),
+                     selected = "-"
+                   ),
+                   checkboxGroupInput(
+                     "tertiarySortingFilterAlbumMonth",
+                     "Include:",
+                     choices = c(
+                       "Artist",
+                       "Album",
+                       "TimeInHours",
+                       "TimeInPlays"
+                     ),
+                     selected = c("Album", "TimeInHours")
+                   )#,
+                   #actionButton('jumpToIndivAlbumM', "Album Information")
+                 ),
+                 mainPanel(dataTableOutput("monthAlbum"))
+               ),
+               
                tabPanel(
                  "Individual Album Data",
                  sidebarPanel(
@@ -1063,7 +1179,7 @@ server <- function(input, output, session) {
                 HoursPer = max(HoursPer))
   })
   
-
+  
   
   observe({
     artist <- input$artist_name
@@ -1090,6 +1206,143 @@ server <- function(input, output, session) {
     
     
   })
+  
+  
+  artist_plays_by_month <- reactive({
+    
+    spm <- cleaned_artist %>%
+      mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+      filter(
+        !is.na(TimeInHours),
+        TimeInHours >= input$monthArtistHrs[1],
+        TimeInHours <= input$monthArtistHrs[2],
+        TimeInPlays >= input$monthArtistPlayed[1],
+        TimeInPlays <= input$monthArtistPlayed[2])
+    
+    
+    
+    if("Most Time Improved - Past Month" == input$secondarySortingFilterArtistMonth){
+      spm <- spm[c(input$tertiarySortingFilterArtistMonth, "dHours", "datenum")]
+      
+      spm %>% filter(!is.na(dHours)) %>%
+        arrange(desc(dHours)) %>% 
+        filter(datenum == as.Date(input$month_choice_artist)) %>%
+        select(-matches("datenum"))
+      
+      
+    }
+    else if("Most Play Improved - Past Month" == input$secondarySortingFilterArtistMonth){
+      
+      spm <- spm[c(input$tertiarySortingFilterArtistMonth, "dPlays", "datenum")]
+      
+      spm %>% filter(!is.na(dPlays)) %>%
+        arrange(desc(dPlays)) %>% 
+        filter(datenum == as.Date(input$month_choice_artist)) %>%
+        select(-matches("datenum"))
+      
+      
+    }
+    else if("Most Rank Improved - Past Month" == input$secondarySortingFilterArtistMonth){
+      
+      spm <- spm[c(input$tertiarySortingFilterArtistMonth, "dRank", "datenum")]
+      
+      spm %>% filter(!is.na(dRank)) %>%
+        arrange(desc(dRank)) %>% 
+        filter(datenum == as.Date(input$month_choice_artist)) %>%
+        select(-matches("datenum"))
+      
+      
+    }
+    else if("Most Value Improved - Past Month" == input$secondarySortingFilterArtistMonth){
+      spm <- spm[c(input$tertiarySortingFilterArtistMonth, "dValue", "datenum")]
+      
+      spm %>% filter(!is.na(dValue)) %>%
+        arrange(desc(dValue)) %>% 
+        filter(datenum == as.Date(input$month_choice_artist)) %>%
+        select(-matches("datenum"))
+      
+      
+    }
+    else if("Most Time Improved - Overall" == input$secondarySortingFilterArtistMonth){
+      spm <- spm[c(input$tertiarySortingFilterArtistMonth, "TotaldTime", "datenum")]
+      
+      spm %>% filter(!is.na(TotaldTime)) %>%
+        arrange(desc(TotaldTime)) %>% 
+        filter(datenum == as.Date(input$month_choice_artist)) %>%
+        select(-matches("datenum"))
+      
+    }
+    else if("Most Play Improved - Overall" == input$secondarySortingFilterArtistMonth){
+      
+      
+      spm <- spm[c(input$tertiarySortingFilterArtistMonth, "TotaldPlays", "datenum")]
+      
+      spm %>% filter(!is.na(TotaldPlays)) %>%
+        arrange(desc(TotaldPlays)) %>% 
+        filter(datenum == as.Date(input$month_choice_artist)) %>%
+        select(-matches("datenum"))
+      
+    }
+    else if("Most Rank Improved - Overall" == input$secondarySortingFilterArtistMonth){
+      spm <- spm[c(input$tertiarySortingFilterArtistMonth, "TotaldRank", "datenum")]
+      
+      spm %>% filter(!is.na(TotaldRank)) %>%
+        arrange(desc(TotaldRank)) %>% 
+        filter(datenum == as.Date(input$month_choice_artist)) %>%
+        select(-matches("datenum"))
+      
+    }
+    else if("Most Value Improved - Overall" == input$secondarySortingFilterArtistMonth){
+      spm <- spm[c(input$tertiarySortingFilterArtistMonth, "TotaldValue", "datenum")]
+      
+      spm %>% filter(!is.na(TotaldValue)) %>%
+        arrange(desc(TotaldValue)) %>% 
+        filter(datenum == as.Date(input$month_choice_artist)) %>%
+        select(-matches("datenum"))
+    }
+    else{
+      spm <- spm[c(input$tertiarySortingFilterArtistMonth, "datenum")]
+      
+      if("TimeInHours" %in% input$tertiarySortingFilterArtistMonth){
+        spm %>%
+          arrange(desc(TimeInHours)) %>% 
+          filter(datenum == as.Date(input$month_choice_artist)) %>%
+          select(-matches("datenum"))
+      }
+      else if("TimeInPlays" %in% input$tertiarySortingFilterArtistMonth){
+        spm %>%
+          arrange(desc(TimeInPlays)) %>% 
+          filter(datenum == as.Date(input$month_choice_artist)) %>%
+          select(-matches("datenum"))
+      }
+      else{
+        
+        
+        spm %>%
+          filter(datenum == as.Date(input$month_choice_artist)) %>%
+          select(-matches("datenum"))
+        
+      }
+      
+      
+      
+    }
+  })
+  
+  # Monthly Artist Server
+  output$monthArtist <- renderDataTable({
+    
+    
+    datatable(artist_plays_by_month(),
+              options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                             "pageLength" = 25)) # removed a rownames=FALSE to see if this is good
+    
+  },server=F,selection='single',rownames = FALSE)
+  
+  
+  observeEvent(input$jumpToIndivArtistM,{s = input$monthArtist_cell_clicked$value
+  updateTabsetPanel(session=getDefaultReactiveDomain(),'artists', selected = "Individual Artist Data")
+  updateSelectizeInput(session=getDefaultReactiveDomain(), 'artist_name',selected=s)})
   
   
   # Overall Artists Server
@@ -1411,6 +1664,145 @@ server <- function(input, output, session) {
       ylab("Hours")
   })
   
+  
+  # Monthly
+  
+  album_plays_by_month <- reactive({
+    
+    spm <- cleaned_album %>%
+      mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+      filter(
+        Album != "-",
+        !is.na(TimeInHours),
+        TimeInHours >= input$monthAlbumHrs[1],
+        TimeInHours <= input$monthAlbumHrs[2],
+        TimeInPlays >= input$monthAlbumPlayed[1],
+        TimeInPlays <= input$monthAlbumPlayed[2])
+    
+    
+    
+    if("Most Time Improved - Past Month" == input$secondarySortingFilterAlbumMonth){
+      spm <- spm[c(input$tertiarySortingFilterAlbumMonth, "dHours", "datenum")]
+      
+      spm %>% filter(!is.na(dHours)) %>%
+        arrange(desc(dHours)) %>% 
+        filter(datenum == as.Date(input$month_choice_album)) %>%
+        select(-matches("datenum"))
+      
+      
+    }
+    else if("Most Play Improved - Past Month" == input$secondarySortingFilterAlbumMonth){
+      
+      spm <- spm[c(input$tertiarySortingFilterAlbumMonth, "dPlays", "datenum")]
+      
+      spm %>% filter(!is.na(dPlays)) %>%
+        arrange(desc(dPlays)) %>% 
+        filter(datenum == as.Date(input$month_choice_album)) %>%
+        select(-matches("datenum"))
+      
+      
+    }
+    else if("Most Rank Improved - Past Month" == input$secondarySortingFilterAlbumMonth){
+      
+      spm <- spm[c(input$tertiarySortingFilterAlbumMonth, "dRank", "datenum")]
+      
+      spm %>% filter(!is.na(dRank)) %>%
+        arrange(desc(dRank)) %>% 
+        filter(datenum == as.Date(input$month_choice_album)) %>%
+        select(-matches("datenum"))
+      
+      
+    }
+    else if("Most Value Improved - Past Month" == input$secondarySortingFilterAlbumMonth){
+      spm <- spm[c(input$tertiarySortingFilterAlbumMonth, "dValue", "datenum")]
+      
+      spm %>% filter(!is.na(dValue)) %>%
+        arrange(desc(dValue)) %>% 
+        filter(datenum == as.Date(input$month_choice_album)) %>%
+        select(-matches("datenum"))
+      
+      
+    }
+    else if("Most Time Improved - Overall" == input$secondarySortingFilterAlbumMonth){
+      spm <- spm[c(input$tertiarySortingFilterAlbumMonth, "TotaldTime", "datenum")]
+      
+      spm %>% filter(!is.na(TotaldTime)) %>%
+        arrange(desc(TotaldTime)) %>% 
+        filter(datenum == as.Date(input$month_choice_album)) %>%
+        select(-matches("datenum"))
+      
+    }
+    else if("Most Play Improved - Overall" == input$secondarySortingFilterAlbumMonth){
+      
+      
+      spm <- spm[c(input$tertiarySortingFilterAlbumMonth, "TotaldPlays", "datenum")]
+      
+      spm %>% filter(!is.na(TotaldPlays)) %>%
+        arrange(desc(TotaldPlays)) %>% 
+        filter(datenum == as.Date(input$month_choice_album)) %>%
+        select(-matches("datenum"))
+      
+    }
+    else if("Most Rank Improved - Overall" == input$secondarySortingFilterAlbumMonth){
+      spm <- spm[c(input$tertiarySortingFilterAlbumMonth, "TotaldRank", "datenum")]
+      
+      spm %>% filter(!is.na(TotaldRank)) %>%
+        arrange(desc(TotaldRank)) %>% 
+        filter(datenum == as.Date(input$month_choice_album)) %>%
+        select(-matches("datenum"))
+      
+    }
+    else if("Most Value Improved - Overall" == input$secondarySortingFilterAlbumMonth){
+      spm <- spm[c(input$tertiarySortingFilterAlbumMonth, "TotaldValue", "datenum")]
+      
+      spm %>% filter(!is.na(TotaldValue)) %>%
+        arrange(desc(TotaldValue)) %>% 
+        filter(datenum == as.Date(input$month_choice_album)) %>%
+        select(-matches("datenum"))
+    }
+    else{
+      spm <- spm[c(input$tertiarySortingFilterAlbumMonth, "datenum")]
+      
+      if("TimeInHours" %in% input$tertiarySortingFilterAlbumMonth){
+        spm %>%
+          arrange(desc(TimeInHours)) %>% 
+          filter(datenum == as.Date(input$month_choice_album)) %>%
+          select(-matches("datenum"))
+      }
+      else if("TimeInPlays" %in% input$tertiarySortingFilterAlbumMonth){
+        spm %>%
+          arrange(desc(TimeInPlays)) %>% 
+          filter(datenum == as.Date(input$month_choice_album)) %>%
+          select(-matches("datenum"))
+      }
+      else{
+        
+        
+        spm %>%
+          filter(datenum == as.Date(input$month_choice_album)) %>%
+          select(-matches("datenum"))
+        
+      }
+      
+      
+      
+    }
+  })
+  
+  # Monthly Album Server
+  output$monthAlbum <- renderDataTable({
+    
+    
+    datatable(album_plays_by_month(),
+              options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                             "pageLength" = 25)) # removed a rownames=FALSE to see if this is good
+    
+  },server=F,selection='single',rownames = FALSE)
+  
+  
+  #observeEvent(input$jumpToIndivAlbumM,{s = input$monthAlbum_cell_clicked$value
+  #updateTabsetPanel(session=getDefaultReactiveDomain(),'albums', selected = "Individual Album Data")
+  #updateSelectizeInput(session=getDefaultReactiveDomain(), 'album_name',selected=s)})
   
   ### END ALBUMS SERVER ###
   
