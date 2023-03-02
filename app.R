@@ -69,8 +69,8 @@ ui <- fluidPage(
                         choices = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")
                         )),
                         selected = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")))[-1]),
-            #actionButton("previous_month", "Previous"),
-            #actionButton("next_month", "Next"),
+            actionButton("previous_month", "Previous"),
+            actionButton("next_month", "Next"),
             sliderInput(
               "topHrsMonth",
               "Hours",
@@ -128,7 +128,9 @@ ui <- fluidPage(
               "Song Name",
               choices = sort(unique(cleaned$SongName)),
               selected = "Instant Crush (feat. Julian Casablancas)"
-            )
+            ),
+            actionButton("previous_song", "Previous"),
+            actionButton("next_song", "Next"),
           ),
           
           mainPanel(
@@ -223,8 +225,8 @@ ui <- fluidPage(
                                choices = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")
                                )),
                                selected = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")))[-1]),
-                   #actionButton("previous_month", "Previous"),
-                   #actionButton("next_month", "Next"),
+                   actionButton("previous_month_artist", "Previous"),
+                   actionButton("next_month_artist", "Next"),
                    sliderInput(
                      "monthArtistHrs",
                      "Hours",
@@ -280,7 +282,9 @@ ui <- fluidPage(
                      "Artist",
                      choices = sort(unique(cleaned$Artist)),
                      selected = "Daft Punk"
-                   )
+                   ),
+                   actionButton("previous_artist", "Previous"),
+                   actionButton("next_artist", "Next"),
                  ),
                  
                  mainPanel(
@@ -389,8 +393,8 @@ ui <- fluidPage(
                      "tertiarySortingFilterAlbumMonth",
                      "Include:",
                      choices = c(
-                       "Artist",
                        "Album",
+                       "Artist",
                        "TimeInHours",
                        "TimeInPlays"
                      ),
@@ -967,6 +971,8 @@ server <- function(input, output, session) {
   updateTabsetPanel(session=getDefaultReactiveDomain(),'songs', selected = "Individual Song Data")
   updateSelectizeInput(session=getDefaultReactiveDomain(), 'song_name',selected=s)})
   
+
+  
   
   
   # Individual Song Server
@@ -1093,9 +1099,30 @@ server <- function(input, output, session) {
   
   
   
+  observeEvent(input$previous_song, {
+    songlist <- sort(unique(cleaned$SongName))
+    current <- which(songlist == input$song_name)
+    if(current > 1){
+      updateSelectInput(session, "song_name",
+                        choices = songlist,
+                        selected = songlist[current - 1])
+    }
+  })
+  observeEvent(input$next_song, {
+    songlist <- sort(unique(cleaned$SongName))
+    current <- which(songlist == input$song_name)
+    if(current < length(songlist)){
+      updateSelectInput(session, "song_name",
+                        choices = songlist,
+                        selected = songlist[current + 1])
+    }
+  })
+  
+  
   observeEvent(input$jumpToIndivArtist,{s = input$overallArtist_cell_clicked$value
   updateTabsetPanel(session=getDefaultReactiveDomain(),'artists', selected = "Individual Artist Data")
   updateSelectizeInput(session=getDefaultReactiveDomain(), 'artist_name',selected=s)})
+  
   
   
   
@@ -1112,6 +1139,25 @@ server <- function(input, output, session) {
   observeEvent(input$jumpToIndivSongM,{s = input$monthSong_cell_clicked$value
   updateTabsetPanel(session=getDefaultReactiveDomain(),'songs', selected = "Individual Song Data")
   updateSelectizeInput(session=getDefaultReactiveDomain(), 'song_name',selected=s)})
+  
+  observeEvent(input$previous_month, {
+    monthlist <- sort(unique(as.Date(cleaned$dates,format = "%B %d %Y")))
+    current <- which(monthlist == input$month_choice_songs)
+    if(current > 1){
+      updateSelectInput(session, "month_choice_songs",
+                        choices = monthlist,
+                        selected = monthlist[current - 1])
+    }
+  })
+  observeEvent(input$next_month, {
+    monthlist <- sort(unique(as.Date(cleaned$dates,format = "%B %d %Y")))
+    current <- which(monthlist == input$month_choice_songs)
+    if(current < length(monthlist)){
+      updateSelectInput(session, "month_choice_songs",
+                        choices = monthlist,
+                        selected = monthlist[current + 1])
+    }
+  })
   
   # observeEvent(input$back,{s = input$monthSong_cell_clicked$value
   # updateSelectizeInput(session=getDefaultReactiveDomain(), 'song_name',selected=s)})
@@ -1344,6 +1390,25 @@ server <- function(input, output, session) {
   updateTabsetPanel(session=getDefaultReactiveDomain(),'artists', selected = "Individual Artist Data")
   updateSelectizeInput(session=getDefaultReactiveDomain(), 'artist_name',selected=s)})
   
+  observeEvent(input$previous_month_artist, {
+    monthlist <- sort(unique(as.Date(cleaned$dates,format = "%B %d %Y")))
+    current <- which(monthlist == input$month_choice_artist)
+    if(current > 1){
+      updateSelectInput(session, "month_choice_artist",
+                        choices = monthlist,
+                        selected = monthlist[current - 1])
+    }
+  })
+  observeEvent(input$next_month_artist, {
+    monthlist <- sort(unique(as.Date(cleaned$dates,format = "%B %d %Y")))
+    current <- which(monthlist == input$month_choice_artist)
+    if(current < length(monthlist)){
+      updateSelectInput(session, "month_choice_artist",
+                        choices = monthlist,
+                        selected = monthlist[current + 1])
+    }
+  })
+
   
   # Overall Artists Server
   output$overallArtist <- renderDataTable({
@@ -1484,6 +1549,27 @@ server <- function(input, output, session) {
       xlab("Date") + 
       ylab("Hours")
   })
+  
+  observeEvent(input$previous_artist, {
+    artistlist <- sort(unique(cleaned$Artist))
+    current <- which(artistlist == input$artist_name)
+    if(current > 1){
+      updateSelectInput(session, "artist_name",
+                        choices = artistlist,
+                        selected = artistlist[current - 1])
+    }
+  })
+  observeEvent(input$next_artist, {
+    artistlist <- sort(unique(cleaned$Artist))
+    current <- which(artistlist == input$artist_name)
+    if(current < length(artistlist)){
+      updateSelectInput(session, "artist_name",
+                        choices = artistlist,
+                        selected = artistlist[current + 1])
+    }
+  })
+  
+
   
   ### END OF ARTISTS SERVER ###
   
