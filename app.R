@@ -33,6 +33,7 @@ library(DT)
 library(highcharter)
 library(lubridate)
 
+
 cleaned <- readr::read_csv("data/cleaned.csv")
 cleaned_artist <- readr::read_csv("data/cleaned_artist.csv")
 cleaned_album <- readr::read_csv("data/cleaned_album.csv")
@@ -472,8 +473,8 @@ ui <- fluidPage(
                              selectizeInput(
                                "ytd_summary",
                                "Please select a summary option:",
-                               choices = c("2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014","2013", "Past Year"),
-                               selected = "2022"
+                               choices = c("2023","2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014","2013", "Past Year"),
+                               selected = "2023"
                              ),
                              selectizeInput(
                                "artist_song",
@@ -1939,8 +1940,24 @@ server <- function(input, output, session) {
   
   
   overall_year_artist <- reactive({
+    
+    if(input$ytd_summary == "2023"){
+      cleaned %>%
+        filter(!is.na(TimeInHours)) %>%
+        mutate_all(~replace(., is.na(.), 0)) %>%
+        mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+        group_by(SongName, Artist) %>%
+        mutate(DateAdded = min(datenum)) %>%
+        ungroup() %>%
+        filter(datenum >= as.Date("January 01 2023", format = "%B %d %Y"),
+               datenum < as.Date("January 01 2024", format = "%B %d %Y")) %>%  #dHours != 0
+        group_by(Artist) %>%
+        mutate(TotalTime = sum(dHours),
+               TotalPlays = sum(dPlays)) %>%
+        ungroup()
+    }
 
-    if(input$ytd_summary == "2022"){
+    else if(input$ytd_summary == "2022"){
     cleaned %>%
         filter(!is.na(TimeInHours)) %>%
         mutate_all(~replace(., is.na(.), 0)) %>%
@@ -2111,8 +2128,25 @@ server <- function(input, output, session) {
   })
     
     overall_year_album <- reactive({
+      
+      if(input$ytd_summary == "2023"){
+        cleaned %>%
+          filter(Album != "-",
+                 !is.na(TimeInHours)) %>%
+          mutate_all(~replace(., is.na(.), 0)) %>%
+          mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+          group_by(Album) %>%
+          mutate(DateAdded = min(datenum)) %>%
+          ungroup() %>%
+          filter(datenum >= as.Date("January 01 2023", format = "%B %d %Y"),
+                 datenum < as.Date("January 01 2024", format = "%B %d %Y")) %>%  #dHours != 0
+          group_by(Album) %>%
+          mutate(TotalTime = sum(dHours),
+                 TotalPlays = sum(dPlays)) %>%
+          ungroup()
+      }
 
-      if(input$ytd_summary == "2022"){
+      else if(input$ytd_summary == "2022"){
         cleaned %>%
           filter(Album != "-",
                  !is.na(TimeInHours)) %>%
@@ -2297,7 +2331,24 @@ server <- function(input, output, session) {
     
       
     overall_year_song <- reactive({
-      if(input$ytd_summary == "2022"){
+      
+      if(input$ytd_summary == "2023"){
+        cleaned %>%
+          filter(!is.na(TimeInHours)) %>%
+          mutate_all(~replace(., is.na(.), 0)) %>%
+          mutate(datenum = as.Date(dates, format = "%B %d %Y")) %>%
+          group_by(SongName, Artist) %>%
+          mutate(DateAdded = min(datenum)) %>%
+          ungroup() %>%
+          filter(datenum >= as.Date("January 01 2023", format = "%B %d %Y"),
+                 datenum < as.Date("January 01 2024", format = "%B %d %Y")) %>%  #dHours != 0
+          group_by(SongName) %>%
+          mutate(TotalTime = sum(dHours),
+                 TotalPlays = sum(dPlays)) %>%
+          ungroup()
+      }
+      
+      else if(input$ytd_summary == "2022"){
         cleaned %>%
           filter(!is.na(TimeInHours)) %>%
           mutate_all(~replace(., is.na(.), 0)) %>%
