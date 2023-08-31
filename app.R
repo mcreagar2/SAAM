@@ -113,8 +113,16 @@ ui <- fluidPage(
                 "TimeInPlays"
               ),
               selected = c("SongName", "TimeInHours")
-            )
-            ,actionButton('jumpToIndivSongM', "Song Information")
+            ),
+            checkboxGroupInput(
+              "quadSortingFilterMonth",
+              "Show:",
+              choices = c(
+                "RowNumbering"
+              ),
+              selected = c("RowNumbering")
+            ),
+            actionButton('jumpToIndivSongM', "Song Information")
           ),
           mainPanel(dataTableOutput("monthSong"))
         ),
@@ -198,6 +206,14 @@ ui <- fluidPage(
                 "Album"
               )
             ),
+            checkboxGroupInput(
+              "quadSortingFilter",
+              "Show:",
+              choices = c(
+                "RowNumbering"
+              ),
+              selected = c("RowNumbering")
+            ),
             actionButton('jumpToIndivSongO', "Song Information")
           ),
           
@@ -223,9 +239,9 @@ ui <- fluidPage(
                  sidebarPanel(
                    selectInput("month_choice_artist",
                                "Choose Month:",
-                               choices = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")
+                               choices = sort(unique(as.Date(cleaned_artist$dates, format = "%B %d %Y")
                                )),
-                               selected = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")))[-1]),
+                               selected = sort(unique(as.Date(cleaned_artist$dates, format = "%B %d %Y")))[-1]),
                    actionButton("previous_month_artist", "Previous"),
                    actionButton("next_month_artist", "Next"),
                    sliderInput(
@@ -267,6 +283,14 @@ ui <- fluidPage(
                        "TimeInPlays"
                      ),
                      selected = c("Artist", "TimeInHours")
+                   ),
+                   checkboxGroupInput(
+                     "quadSortingFilterArtistMonth",
+                     "Show:",
+                     choices = c(
+                       "RowNumbering"
+                     ),
+                     selected = c("RowNumbering")
                    ),
                    actionButton('jumpToIndivArtistM', "Artist Information")
                  ),
@@ -332,6 +356,14 @@ ui <- fluidPage(
                      language = "en",
                      separator = " to "
                    ),
+                   checkboxGroupInput(
+                     "quadSortingFilterArtist",
+                     "Show:",
+                     choices = c(
+                       "RowNumbering"
+                     ),
+                     selected = c("RowNumbering")
+                   ),
                    actionButton('jumpToIndivArtist', "Artist Information")
                    
                  ),
@@ -355,9 +387,9 @@ ui <- fluidPage(
                  sidebarPanel(
                    selectInput("month_choice_album",
                                "Choose Month:",
-                               choices = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")
+                               choices = sort(unique(as.Date(cleaned_album$dates, format = "%B %d %Y")
                                )),
-                               selected = sort(unique(as.Date(cleaned$dates, format = "%B %d %Y")))[-1]),
+                               selected = sort(unique(as.Date(cleaned_album$dates, format = "%B %d %Y")))[-1]),
                    #actionButton("previous_month", "Previous"),
                    #actionButton("next_month", "Next"),
                    sliderInput(
@@ -400,6 +432,14 @@ ui <- fluidPage(
                        "TimeInPlays"
                      ),
                      selected = c("Album", "TimeInHours")
+                   ),
+                   checkboxGroupInput(
+                     "quadSortingFilterAlbumMonth",
+                     "Show:",
+                     choices = c(
+                       "RowNumbering"
+                     ),
+                     selected = c("RowNumbering")
                    )#,
                    #actionButton('jumpToIndivAlbumM', "Album Information")
                  ),
@@ -450,6 +490,14 @@ ui <- fluidPage(
                                choices = c("SongName", "Artist", "Album", "CurrentStreak"),
                                selected = "SongName"
                              ),
+                             checkboxGroupInput(
+                               "quadSortingFilterBourMonth",
+                               "Show:",
+                               choices = c(
+                                 "RowNumbering"
+                               ),
+                               selected = c("RowNumbering")
+                             )
                            ),
                            mainPanel(
                              tableOutput("month_stats_bourgeoisie"),
@@ -460,6 +508,16 @@ ui <- fluidPage(
                          # Overall Bour. Tab
                          tabPanel(
                            "Overall Bourgeoisie Info",
+                           sidebarPanel(
+                             checkboxGroupInput(
+                               "quadSortingFilterBour",
+                               "Show:",
+                               choices = c(
+                                 "RowNumbering"
+                               ),
+                               selected = c("RowNumbering")
+                             )
+                           ),
                            mainPanel(
                              dataTableOutput("overallBourgeoisie"),
                              verbatimTextOutput('selectionB')
@@ -713,7 +771,8 @@ server <- function(input, output, session) {
   
   
   # Overall Song Server
-  output$overallSong <- renderDataTable({
+  
+  overallSongAllData <- reactive({
     
     if("Most Time Improved" == input$secondarySortingFilter){
       
@@ -966,7 +1025,20 @@ server <- function(input, output, session) {
         
       }
     }
-  },server=F, selection='single', rownames=FALSE)
+  })
+  
+  output$overallSong <- renderDataTable({
+    if("RowNumbering" %in% input$quadSortingFilter){
+      datatable(overallSongAllData(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25))
+    }
+    else{
+      datatable(overallSongAllData(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25), rownames = FALSE)
+    }
+    },server=F, selection='single')
   
   observeEvent(input$jumpToIndivSongO,{s = input$overallSong_cell_clicked$value
   updateTabsetPanel(session=getDefaultReactiveDomain(),'songs', selected = "Individual Song Data")
@@ -1130,12 +1202,19 @@ server <- function(input, output, session) {
   # Monthly Song Server
   output$monthSong <- renderDataTable({
     
+    if("RowNumbering" %in% input$quadSortingFilterMonth){
+      datatable(subset_plays_by_month(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25))
     
-    datatable(subset_plays_by_month(),
-              options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
-                "pageLength" = 25)) # removed a rownames=FALSE to see if this is good
+    }
+    else{
+      datatable(subset_plays_by_month(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25), rownames = FALSE)
+    }
     
-  },server=F,selection='single',rownames = FALSE)
+  },server=F,selection='single')
   
   observeEvent(input$jumpToIndivSongM,{s = input$monthSong_cell_clicked$value
   updateTabsetPanel(session=getDefaultReactiveDomain(),'songs', selected = "Individual Song Data")
@@ -1379,12 +1458,19 @@ server <- function(input, output, session) {
   # Monthly Artist Server
   output$monthArtist <- renderDataTable({
     
+    if("RowNumbering" %in% input$quadSortingFilterArtistMonth){
+      datatable(artist_plays_by_month(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25))
+      
+    }
+    else{
+      datatable(artist_plays_by_month(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25), rownames = FALSE)
+    }
     
-    datatable(artist_plays_by_month(),
-              options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
-                             "pageLength" = 25)) # removed a rownames=FALSE to see if this is good
-    
-  },server=F,selection='single',rownames = FALSE)
+  },server=F,selection='single')
   
   
   observeEvent(input$jumpToIndivArtistM,{s = input$monthArtist_cell_clicked$value
@@ -1412,13 +1498,28 @@ server <- function(input, output, session) {
 
   
   # Overall Artists Server
-  output$overallArtist <- renderDataTable({
+  overallArtistReactive <- reactive({
     subset_artist_plays() %>%
       select(Artist, TimeInHours, TimeInPlays) %>%
       group_by(Artist) %>%
       summarise(TotalTime = max(TimeInHours),
                 TotalPlays = max(TimeInPlays)) %>%
       arrange(desc(TotalTime))
+  })
+  
+  output$overallArtist <- renderDataTable({
+    if("RowNumbering" %in% input$quadSortingFilterArtist){
+      datatable(overallArtistReactive(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25))
+      
+    }
+    else{
+      datatable(overallArtistReactive(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25), rownames = FALSE)
+    }
+    
     
   },server=F,selection='single')
   
@@ -1879,12 +1980,21 @@ server <- function(input, output, session) {
   # Monthly Album Server
   output$monthAlbum <- renderDataTable({
     
+  
+    if("RowNumbering" %in% input$quadSortingFilterAlbumMonth){
+      datatable(album_plays_by_month(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25))
+      
+    }
+    else{
+      datatable(album_plays_by_month(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25), rownames = FALSE)
+    }
     
-    datatable(album_plays_by_month(),
-              options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
-                             "pageLength" = 25)) # removed a rownames=FALSE to see if this is good
     
-  },server=F,selection='single',rownames = FALSE)
+  },server=F,selection='single')
   
   
   #observeEvent(input$jumpToIndivAlbumM,{s = input$monthAlbum_cell_clicked$value
@@ -2527,15 +2637,42 @@ server <- function(input, output, session) {
       slice_head(n=1)
   })
   
+  montlyBourReactive <- reactive({
+    month_subset() %>%
+    select(input$tertiarySortingFilterBour)
+  })
+  
   # Monthly Bour. Server
   output$month_songs_bourgeoisie <- renderDataTable({
-    month_subset() %>%
-      select(input$tertiarySortingFilterBour)
+    if("RowNumbering" %in% input$quadSortingFilterBourMonth){
+      datatable(montlyBourReactive(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25))
+      
+    }
+    else{
+      datatable(montlyBourReactive(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25), rownames = FALSE)
+    }
+    
   })
   
   # Overall Bour. Server
   output$overallBourgeoisie <- renderDataTable({
-    overall_bour_stats()
+    
+    if("RowNumbering" %in% input$quadSortingFilterBour){
+      datatable(overall_bour_stats(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25))
+      
+    }
+    else{
+      datatable(overall_bour_stats(),
+                options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All')),
+                               "pageLength" = 25), rownames = FALSE)
+    }
+    
   },server=F,selection='none')
   
   
@@ -2584,7 +2721,7 @@ server <- function(input, output, session) {
         select(SongName, Artist, TotalTime, TotalPlays) %>%
         arrange(desc(TotalTime))
     }
-  },server=F,selection='none')
+  },options = list("lengthMenu" = list(c(10, 25, 50, 100, -1), c('10', '25', '50', '100', 'All'))),server=F,selection='none')
   
 
   

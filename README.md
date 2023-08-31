@@ -43,12 +43,20 @@ Artists and Albums tabs follow closely to Songs regarding the content. For the A
 The Miscellaneous tab tracks the songs on a playlist named Bourgeoisie created by the owner of the listening history data. This playlist is updated each month based on how much the owner is subjectively enjoying songs. So, the amount of time a song stays on the playlist is a metric of how enjoyable the song is to the owner, to some extent. There is also information in the Miscellaneous tab about yearly listening statistics for songs, albums, and artists.
 
 
-**Accreditations**
+**Acknowledgements**
 
 I would like to acknowledge the Shiny app Living in the Lego World. Significant portions of the user interface were modeled after this app. Full citation: Kaplan, A (2019). Living in the Lego World. https://shiny.rstudio.com/gallery/lego-world.html
 
+This project also began as a project for a graduate level statistics and data visualization class and was further expanded after the semester ended. Elements of this app are due in part to Charlie Bonk (https://www.linkedin.com/in/charles-bonk).
+
 
 ## How to use the app.R file
+
+To run the file locally, just click the "Run App" button in R Studio!
+
+No editing should be needed unless more features are desired. The editing for updating the data is done in the cleaning_code.R file (not in this repository- please contact Molly if you want more information about it). Once the updated, cleaned data files are in the data folder in the project directory, you are ready to put the updates online. To deploy the app, make sure your working directory is set to the correct folder ( using setwd() ). Then, use the command 
+rsconnect::deployApp()
+to deploy the newest version.
 
 
 
